@@ -154,7 +154,7 @@
           <button class="primary" type="submit">Log in</button>
         </form>
         <p class="switch">New to 1 2 3 Budgeting? <button class="link-button" data-view="signupView">Create an account</button></p>
-        <p class="demo-note">This page currently uses local demo authentication. It is ready to be replaced with Supabase Auth.</p>
+        <p class="demo-note">Secure sign-in and cloud synchronization are powered by Supabase.</p>
       </div>
 
       <div class="auth-view" id="signupView">
@@ -193,7 +193,13 @@
     </section>
   </main>
 
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const supabaseClient = window.supabase.createClient(
+      window.SUPABASE_CONFIG.url,
+      window.SUPABASE_CONFIG.publishableKey
+    );
     let pendingSignup = null;
 
     function showView(id) {
@@ -212,12 +218,6 @@
       window.location.href = isLaptop ? "laptop.html" : "index.html";
     }
 
-    async function hashPassword(password) {
-      const bytes = new TextEncoder().encode(password);
-      const digest = await crypto.subtle.digest("SHA-256", bytes);
-      return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
-    }
-
     document.querySelectorAll("[data-view]").forEach(button => {
       button.addEventListener("click", () => showView(button.dataset.view));
     });
@@ -228,37 +228,47 @@
       const password = document.getElementById("signupPassword").value;
       const confirm = document.getElementById("signupConfirm").value;
       if (password !== confirm) return showError("signupError", "The passwords do not match.");
-      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
-      if (accounts.some(account => account.email === email)) return showError("signupError", "An account already exists with this email.");
-      pendingSignup = { email, passwordHash: await hashPassword(password) };
+      pendingSignup = { email, password };
       showView("profileView");
       document.getElementById("fullName").focus();
     });
 
-    document.getElementById("profileForm").addEventListener("submit", event => {
+    document.getElementById("profileForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!pendingSignup) return showView("signupView");
       const name = document.getElementById("fullName").value.trim();
       if (name.split(/\s+/).length < 2) return showError("profileError", "Please enter your full name.");
-      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
-      accounts.push({ email: pendingSignup.email, passwordHash: pendingSignup.passwordHash, name });
-      localStorage.setItem("flowly-demo-users", JSON.stringify(accounts));
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: pendingSignup.email,
+        password: pendingSignup.password,
+        options: { data: { name } }
+      });
+      if (error) return showError("profileError", error.message);
       localStorage.setItem("flowly-profile", JSON.stringify({ name, email: pendingSignup.email }));
-      sessionStorage.setItem("flowly-authenticated", "true");
-      openApp();
+      if (data.session) {
+        sessionStorage.setItem("flowly-authenticated", "true");
+        openApp();
+      } else {
+        pendingSignup = null;
+        showView("loginView");
+        showError("loginError", "Check your email to confirm your account, then log in.");
+      }
     });
 
     document.getElementById("loginForm").addEventListener("submit", async event => {
       event.preventDefault();
       const email = document.getElementById("loginEmail").value.trim().toLowerCase();
       const password = document.getElementById("loginPassword").value;
-      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
-      const passwordHash = await hashPassword(password);
-      const account = accounts.find(item => item.email === email && item.passwordHash === passwordHash);
-      if (!account) return showError("loginError", "That email or password is incorrect.");
-      localStorage.setItem("flowly-profile", JSON.stringify({ name: account.name, email: account.email }));
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) return showError("loginError", error.message);
+      const name = data.user.user_metadata?.name || email.split("@")[0];
+      localStorage.setItem("flowly-profile", JSON.stringify({ name, email }));
       sessionStorage.setItem("flowly-authenticated", "true");
       openApp();
+    });
+
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (data.session) openApp();
     });
   </script>
 </body>

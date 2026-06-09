@@ -732,7 +732,7 @@
           <label>New password
             <input id="settingsPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
           </label>
-          <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Your password is not stored in this browser. It will be handled securely when Supabase Auth is connected.</p>
+          <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Profile, email, and password changes are handled securely by Supabase Auth.</p>
         </div>
         <div class="settings-bank">
           <h2 style="margin-bottom:10px">Data sync</h2>
@@ -957,8 +957,15 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    if (sessionStorage.getItem("flowly-authenticated") !== "true") window.location.replace("login.html");
+    const supabaseClient = window.supabase.createClient(
+      window.SUPABASE_CONFIG.url,
+      window.SUPABASE_CONFIG.publishableKey
+    );
+    let supabaseUser = null;
+    let lastCloudUpdatedAt = "";
     const demoMerchants = new Set(["Trader Joe's", "Shell", "Netflix", "Target", "Rent"]);
     let transactions = JSON.parse(localStorage.getItem("flowly-transactions")) || [];
     transactions = transactions.filter(tx => !(demoMerchants.has(tx.merchant) && tx.date.startsWith("2026-06")));
@@ -1408,6 +1415,16 @@
         : "Waiting for first sync";
     }
 
+    function collectCloudData() {
+      return Object.fromEntries(syncDataKeys.map(key => [key, localStorage.getItem(key)]));
+    }
+
+    function applyCloudData(data) {
+      Object.entries(data || {}).forEach(([key, value]) => {
+        if (syncDataKeys.includes(key) && value !== null) localStorage.setItem(key, value);
+      });
+    }
+
     function refreshFromStorage() {
       transactions = JSON.parse(localStorage.getItem("flowly-transactions")) || [];
       balances = JSON.parse(localStorage.getItem("flowly-balances")) || {};
@@ -1436,18 +1453,67 @@
       renderHomePlanning();
     }
 
-    function performBrowserSync(manual = false) {
+    async function performBrowserSync(manual = false) {
       const signature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
-      if (!manual && signature === lastSyncSignature) {
-        updateSyncStatus();
-        return;
+      try {
+        if (supabaseUser && (manual || signature !== lastSyncSignature)) {
+          const updatedAt = new Date().toISOString();
+          const { error } = await supabaseClient.from("budget_data").upsert({
+            user_id: supabaseUser.id,
+            data: collectCloudData(),
+            updated_at: updatedAt
+          }, { onConflict: "user_id" });
+          if (error) throw error;
+          lastCloudUpdatedAt = updatedAt;
+          lastSyncSignature = signature;
+        } else if (supabaseUser) {
+          const { data, error } = await supabaseClient.from("budget_data")
+            .select("data, updated_at")
+            .eq("user_id", supabaseUser.id)
+            .maybeSingle();
+          if (error) throw error;
+          if (data?.updated_at && data.updated_at > lastCloudUpdatedAt) {
+            applyCloudData(data.data);
+            lastCloudUpdatedAt = data.updated_at;
+            refreshFromStorage();
+            lastSyncSignature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
+          }
+        }
+      } catch (error) {
+        console.error("Supabase sync failed:", error);
+        if (manual) showToast("Cloud sync needs the Supabase table setup");
       }
-      lastSyncSignature = signature;
       const timestamp = new Date().toISOString();
       localStorage.setItem("flowly-last-sync", timestamp);
       syncChannel?.postMessage({ type: "refresh", timestamp });
       updateSyncStatus(timestamp);
-      if (manual) showToast("Browser data synced");
+      if (manual && supabaseUser) showToast("Cloud data synced");
+    }
+
+    async function initializeSupabase() {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) {
+        sessionStorage.removeItem("flowly-authenticated");
+        window.location.replace("login.html");
+        return;
+      }
+      supabaseUser = sessionData.session.user;
+      sessionStorage.setItem("flowly-authenticated", "true");
+      const { data, error } = await supabaseClient.from("budget_data")
+        .select("data, updated_at")
+        .eq("user_id", supabaseUser.id)
+        .maybeSingle();
+      if (!error && data) {
+        applyCloudData(data.data);
+        lastCloudUpdatedAt = data.updated_at || "";
+        refreshFromStorage();
+      }
+      lastSyncSignature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
+      if (!data && !error) {
+        lastSyncSignature = "";
+        await performBrowserSync();
+      }
+      updateSyncStatus(lastCloudUpdatedAt);
     }
 
     syncChannel?.addEventListener("message", event => {
@@ -1726,11 +1792,19 @@
       setTimeout(() => performBrowserSync(true), 0);
     });
 
-    document.getElementById("settingsForm").addEventListener("submit", event => {
+    document.getElementById("settingsForm").addEventListener("submit", async event => {
       event.preventDefault();
       profile.name = document.getElementById("settingsName").value.trim();
       profile.email = document.getElementById("settingsEmail").value.trim();
       const requestedPassword = document.getElementById("settingsPassword").value;
+      if (supabaseUser) {
+        const authUpdates = { data: { name: profile.name } };
+        if (profile.email && profile.email !== supabaseUser.email) authUpdates.email = profile.email;
+        if (requestedPassword) authUpdates.password = requestedPassword;
+        const { data, error } = await supabaseClient.auth.updateUser(authUpdates);
+        if (error) return showToast(error.message);
+        supabaseUser = data.user || supabaseUser;
+      }
       bankNames = {
         chase: document.getElementById("settingsChaseName").value.trim(),
         sofi: document.getElementById("settingsSofiName").value.trim(),
@@ -1783,10 +1857,11 @@
       renderHomePlanning();
       document.getElementById("settingsPassword").value = "";
       performBrowserSync();
-      showToast(requestedPassword ? "Settings saved. Password awaits Supabase connection." : "Settings saved");
+      showToast("Settings saved");
     });
 
-    document.getElementById("logoutButton").addEventListener("click", () => {
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await supabaseClient.auth.signOut();
       sessionStorage.removeItem("flowly-authenticated");
       window.location.href = "login.html";
     });
@@ -1809,7 +1884,7 @@
     renderRecurring();
     renderHomePlanning();
     updateSyncStatus();
-    performBrowserSync();
+    initializeSupabase();
     setInterval(() => performBrowserSync(), 10000);
     window.addEventListener("focus", () => {
       refreshFromStorage();
