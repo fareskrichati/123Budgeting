@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0c1c19">
+  <title>1 2 3 Budgeting - Laptop</title>
+  <style>
+    :root {
+      --ink: #10221f;
+      --muted: #71807c;
+      --paper: #f4f6f1;
+      --card: #ffffff;
+      --green: #1b694f;
+      --green-dark: #0c3d30;
+      --lime: #c9f27b;
+      --peach: #ffb58f;
+      --lavender: #c7c3ff;
+      --blue: #8fd5ee;
+      --line: #e3e8e1;
+      --shadow: 0 16px 40px rgba(24, 52, 45, .09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(201, 242, 123, .18), transparent 25rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+
+    .app {
+      width: min(100%, 480px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 0 18px 108px;
+      position: relative;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(18px + env(safe-area-inset-top)) 2px 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: var(--green-dark);
+      color: var(--lime);
+      font-weight: 900;
+      font-size: 20px;
+      transform: rotate(-4deg);
+    }
+    .brand span { font-weight: 850; letter-spacing: -.5px; font-size: 19px; }
+    .avatar {
+      width: 40px; height: 40px; border: 0; border-radius: 50%;
+      background: var(--peach); font-weight: 800; cursor: pointer;
+    }
+    .settings-shortcut { display: flex; align-items: center; gap: 8px; }
+    .settings-shortcut > span { color: var(--green-dark); font-size: 12px; font-weight: 800; }
+
+    .page { display: none; animation: rise .25s ease; }
+    .page.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    h1 { margin: 0; font-size: 31px; line-height: 1.06; letter-spacing: -1.4px; }
+    h2 { margin: 0; font-size: 18px; letter-spacing: -.45px; }
+    p { line-height: 1.5; }
+    .sub { margin: 8px 0 22px; color: var(--muted); font-size: 14px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: 28px;
+      color: white;
+      background: var(--green-dark);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 190px; height: 190px; border-radius: 50%;
+      right: -70px; top: -95px;
+      border: 35px solid rgba(201, 242, 123, .13);
+    }
+    .hero-label { color: #b9cbc4; font-size: 13px; }
+    .hero-amount { margin: 6px 0 24px; font-size: 39px; letter-spacing: -2px; font-weight: 800; }
+    .hero-row { display: flex; gap: 12px; }
+    .hero-stat {
+      flex: 1; padding: 12px; border-radius: 16px;
+      background: rgba(255,255,255,.08);
+    }
+    .hero-stat small { display: block; color: #b9cbc4; margin-bottom: 3px; }
+    .hero-stat strong { font-size: 15px; }
+
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 26px 2px 13px;
+    }
+    .section-head button {
+      border: 0; background: transparent; color: var(--green);
+      font-size: 13px; font-weight: 750; cursor: pointer;
+    }
+
+    .chart-card, .card {
+      background: var(--card); border: 1px solid rgba(16,34,31,.035);
+      border-radius: 23px; padding: 18px; box-shadow: 0 8px 25px rgba(28, 48, 43, .055);
+    }
+    .donut-wrap { display: flex; align-items: center; gap: 18px; }
+    .donut {
+      width: 126px; height: 126px; border-radius: 50%; flex: 0 0 auto;
+      background: conic-gradient(var(--green) 0 38%, var(--peach) 38% 64%, var(--lavender) 64% 84%, var(--blue) 84%);
+      display: grid; place-items: center;
+    }
+    .donut::after {
+      content: attr(data-label); white-space: pre; text-align: center;
+      display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%;
+      background: white; font-weight: 800; font-size: 14px; line-height: 1.25;
+    }
+    .legend { flex: 1; display: grid; gap: 11px; }
+    .legend-row { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .legend-row span:nth-child(2) { color: var(--muted); }
+    .legend-row strong { font-size: 12px; }
+
+    .transaction-list { display: grid; gap: 10px; }
+    .transaction {
+      display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center;
+      background: white; border-radius: 18px; padding: 12px;
+    }
+    .tx-icon {
+      width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+      font-size: 19px; background: #edf5e7;
+    }
+    .tx-name { font-size: 14px; font-weight: 750; }
+    .tx-meta { color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .tx-amount { font-weight: 800; font-size: 14px; }
+    .tx-actions { display: flex; align-items: center; gap: 8px; }
+    .delete-expense {
+      width: 31px; height: 31px; border: 0; border-radius: 10px; cursor: pointer;
+      color: #a63f2b; background: #fff0eb; font-size: 17px;
+    }
+
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .quick {
+      text-align: left; border: 0; border-radius: 20px; padding: 17px;
+      cursor: pointer; min-height: 112px; transition: transform .18s;
+    }
+    .quick:active { transform: scale(.97); }
+    .quick:nth-child(1) { background: var(--lime); }
+    .quick:nth-child(2) { background: var(--lavender); }
+    .quick:nth-child(3) { background: var(--peach); }
+    .quick-icon { font-size: 23px; display: block; margin-bottom: 13px; }
+    .quick strong { display: block; font-size: 15px; }
+    .quick small { display: block; margin-top: 3px; opacity: .65; }
+
+    .calendar-card { padding: 17px 14px; }
+    .calendar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 4px; }
+    .month-nav { border: 0; background: #edf1ea; width: 34px; height: 34px; border-radius: 11px; cursor: pointer; }
+    .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .weekdays { color: var(--muted); font-size: 10px; font-weight: 800; margin-bottom: 7px; }
+    .day {
+      position: relative; min-height: 54px; padding: 8px 1px 3px; border-radius: 13px;
+      font-size: 12px; cursor: pointer;
+    }
+    .day:hover { background: #f2f5ef; }
+    .day.empty { cursor: default; }
+    .day.today { background: var(--green-dark); color: white; font-weight: 800; }
+    .day.selected:not(.today) { box-shadow: inset 0 0 0 2px var(--green); }
+    .spent { display: block; margin-top: 5px; color: var(--green); font-size: 8px; font-weight: 800; }
+    .today .spent { color: var(--lime); }
+    .recurring-dot {
+      position: absolute; top: 5px; right: 5px; width: 7px; height: 7px;
+      border-radius: 50%; background: var(--peach); box-shadow: 0 0 0 2px white;
+    }
+    .today .recurring-dot { box-shadow: 0 0 0 2px var(--green-dark); }
+    .spend-summary { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #edf5e7; border-radius: 16px; }
+    .spend-summary span { color: var(--muted); font-size: 12px; }
+    .calendar-recurring { margin-top: 10px; display: grid; gap: 8px; }
+    .calendar-event { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; border-radius: 13px; background: #fff4ee; font-size: 12px; }
+    .calendar-event span { color: var(--muted); }
+
+    details {
+      background: white; border-radius: 20px; margin-bottom: 11px;
+      box-shadow: 0 6px 22px rgba(28,48,43,.05); overflow: hidden;
+    }
+    summary {
+      list-style: none; cursor: pointer; padding: 17px;
+      display: grid; grid-template-columns: 46px 1fr auto; gap: 12px; align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .bank-mark {
+      width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center;
+      color: white; font-size: 12px; font-weight: 900; letter-spacing: -.2px;
+    }
+    .chase { background: #176db5; }
+    .sofi { background: #7057d9; }
+    .mission { background: #d45d35; }
+    .robinhood { background: #0b1f1a; color: #c7f65c; }
+    .bank-name { font-weight: 800; font-size: 14px; }
+    .bank-type { color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .bank-balance { text-align: right; font-weight: 850; font-size: 15px; }
+    .chevron { color: var(--muted); font-size: 11px; display: inline-block; margin-left: 6px; transition: transform .2s; }
+    details[open] .chevron { transform: rotate(180deg); }
+    .detail-body { border-top: 1px solid var(--line); padding: 15px 17px 17px; }
+    .detail-row { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+    .detail-row strong { color: var(--ink); }
+    .mini-action { width: 100%; border: 0; background: #edf5e7; color: var(--green-dark); padding: 11px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+    .net-worth { background: var(--green-dark); color: white; margin-bottom: 20px; }
+    .net-worth .hero-label { margin-bottom: 6px; }
+    .net-worth .hero-amount { margin: 0; }
+
+    .form-card { display: grid; gap: 15px; }
+    label { font-size: 12px; color: var(--muted); font-weight: 750; }
+    input, select {
+      width: 100%; margin-top: 7px; padding: 14px 13px; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 13px; background: #f9faf8; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(27,105,79,.1); }
+    .method-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 7px; padding: 5px; border-radius: 14px; background: #edf1ea; }
+    .method-toggle button { border: 0; padding: 10px; border-radius: 10px; background: transparent; font-weight: 750; color: var(--muted); cursor: pointer; }
+    .method-toggle button.active { background: white; color: var(--green-dark); box-shadow: 0 4px 12px rgba(0,0,0,.07); }
+    .primary {
+      width: 100%; border: 0; border-radius: 15px; padding: 15px;
+      background: var(--green-dark); color: white; font-weight: 850; cursor: pointer;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .transfer-arrow { text-align: center; margin: -3px 0; color: var(--green); font-size: 21px; font-weight: 900; }
+    .split-fields { display: none; gap: 10px; }
+    .split-fields.show { display: grid; }
+    .split-row { display: grid; grid-template-columns: 1fr 92px; gap: 10px; align-items: end; }
+    .deposit-list { display: grid; gap: 10px; }
+    .empty-state { color: var(--muted); font-size: 13px; text-align: center; padding: 18px; }
+    .settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .settings-bank { padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: #f9faf8; }
+    .settings-launchers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .settings-launcher { border: 1px solid var(--line); border-radius: 15px; padding: 14px; background: #f9faf8; text-align: left; cursor: pointer; }
+    .settings-launcher strong { display: block; font-size: 13px; }
+    .settings-launcher small { display: block; margin-top: 4px; color: var(--muted); }
+    .account-builder { display: grid; gap: 10px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: #f9faf8; }
+    .account-builder .primary { padding: 12px; }
+    .added-account-list { display: grid; gap: 10px; }
+    .added-account-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px; border-radius: 14px; background: white; border: 1px solid var(--line); }
+    .added-account-row .remove-account { grid-column: 1 / -1; border: 0; border-radius: 11px; padding: 10px; background: #fff0eb; color: #a63f2b; font-weight: 800; cursor: pointer; }
+    .sync-status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .sync-status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(27,105,79,.12); }
+    .countdown-card { display: grid; gap: 11px; }
+    .countdown-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .countdown-top strong { font-size: 15px; }
+    .countdown-track { height: 10px; overflow: hidden; border-radius: 10px; background: #e7ece5; }
+    .countdown-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--green), #68aa75); transition: width .25s; }
+    .due-list { display: grid; gap: 8px; }
+    .due-item { display: grid; gap: 9px; padding: 13px; border-radius: 15px; background: #fff4ee; font-size: 12px; }
+    .due-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .due-track { height: 8px; overflow: hidden; border-radius: 8px; background: #f0ddd3; }
+    .due-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #d45d35, var(--peach)); }
+    .recurring-options { display: none; gap: 12px; }
+    .recurring-options.show { display: grid; }
+    .check-row { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+    .check-row input { width: 18px; margin: 0; }
+    .status-pill { display: inline-block; padding: 4px 8px; border-radius: 8px; background: #edf5e7; color: var(--green); font-size: 10px; font-weight: 800; }
+
+    .bottom-nav {
+      position: fixed; z-index: 20; left: 50%; bottom: 0; transform: translateX(-50%);
+      width: min(100%, 480px); display: grid; grid-template-columns: repeat(4, 1fr);
+      padding: 10px 12px calc(11px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(16,34,31,.06); background: rgba(255,255,255,.94);
+      backdrop-filter: blur(16px);
+    }
+    .nav-brand { display: none; }
+    .nav-btn {
+      border: 0; background: transparent; color: #8a9692; padding: 6px 2px;
+      display: grid; place-items: center; gap: 3px; cursor: pointer; font-size: 10px; font-weight: 700;
+    }
+    .nav-icon { font-size: 19px; line-height: 1; }
+    .nav-btn.active { color: var(--green-dark); }
+    .nav-btn.active .nav-icon { background: var(--lime); padding: 7px 15px; border-radius: 14px; margin-top: -9px; }
+
+    .modal {
+      position: fixed; z-index: 50; inset: 0; display: none; align-items: flex-end; justify-content: center;
+      background: rgba(8,22,18,.5); padding: 18px;
+    }
+    .modal.open { display: flex; }
+    .modal-sheet {
+      width: min(100%, 444px); max-height: 91vh; overflow-y: auto;
+      background: var(--paper); border-radius: 28px 28px 20px 20px; padding: 20px;
+      animation: sheet .25s ease;
+    }
+    @keyframes sheet { from { transform: translateY(20px); opacity: 0; } }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .close { width: 34px; height: 34px; border: 0; border-radius: 50%; background: #e6eae4; cursor: pointer; font-size: 18px; }
+    .toast {
+      position: fixed; z-index: 80; left: 50%; bottom: 92px; transform: translate(-50%, 20px);
+      width: max-content; max-width: calc(100% - 36px); padding: 12px 17px; border-radius: 13px;
+      color: white; background: #10221f; font-size: 13px; font-weight: 700;
+      opacity: 0; pointer-events: none; transition: .25s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (min-width: 700px) and (max-width: 999px) {
+      body { padding: 20px 0; }
+      .app { min-height: calc(100vh - 40px); border-radius: 32px; box-shadow: 0 20px 70px rgba(20,45,38,.12); overflow: hidden; }
+      .bottom-nav { bottom: 20px; border-radius: 0 0 32px 32px; }
+    }
+
+    @media (min-width: 1000px) {
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(201, 242, 123, .22), transparent 30rem),
+          #eef2eb;
+      }
+
+      .app {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0 clamp(32px, 4vw, 80px) 60px 292px;
+      }
+
+      header {
+        padding: 30px 0 26px;
+        justify-content: flex-end;
+      }
+
+      header .brand { display: none; }
+      .avatar { width: 44px; height: 44px; }
+
+      .bottom-nav {
+        left: 24px;
+        top: 24px;
+        bottom: 24px;
+        transform: none;
+        width: 224px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        padding: 24px 16px;
+        border: 0;
+        border-radius: 28px;
+        background: var(--green-dark);
+        box-shadow: 0 20px 50px rgba(12, 61, 48, .2);
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: white;
+        margin: 2px 8px 34px;
+        font-weight: 850;
+        font-size: 21px;
+        letter-spacing: -.6px;
+      }
+
+      .nav-brand .logo {
+        background: var(--lime);
+        color: var(--green-dark);
+      }
+
+      .nav-btn {
+        display: flex;
+        justify-content: flex-start;
+        gap: 13px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        color: #aac1b9;
+        font-size: 13px;
+        text-align: left;
+      }
+
+      .nav-icon {
+        width: 24px;
+        font-size: 18px;
+        text-align: center;
+      }
+
+      .nav-btn.active {
+        color: var(--green-dark);
+        background: var(--lime);
+      }
+
+      .nav-btn.active .nav-icon {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+      }
+
+      .page.active {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(380px, .85fr);
+        gap: 16px clamp(24px, 2.5vw, 42px);
+        align-items: start;
+      }
+
+      .page > .eyebrow,
+      .page > h1,
+      .page > .sub {
+        grid-column: 1 / -1;
+      }
+
+      .page > h1 { font-size: 39px; }
+      .page > .sub { margin-bottom: 14px; }
+      .hero { padding: 29px; }
+      .hero-amount { font-size: 45px; }
+      .card, .chart-card { padding: 21px; }
+
+      #home .home-spending-head {
+        grid-column: 1;
+        grid-row: 4;
+        margin-top: 0;
+      }
+      #home .chart-card {
+        grid-column: 1;
+        grid-row: 5;
+        min-height: 178px;
+        display: grid;
+        align-items: center;
+      }
+      #home .home-quick-head {
+        grid-column: 2;
+        grid-row: 4;
+        margin-top: 0;
+      }
+      #home .quick-grid {
+        grid-column: 2;
+        grid-row: 5;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      #home .quick {
+        min-height: 178px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      #home .home-payday-head {
+        grid-column: 1;
+        grid-row: 6;
+        margin-top: 14px;
+      }
+      #home #paydayCard {
+        grid-column: 1;
+        grid-row: 7;
+        min-height: 124px;
+        align-content: center;
+      }
+      #home .home-card-due-head {
+        grid-column: 2;
+        grid-row: 6;
+        margin-top: 14px;
+      }
+      #home #homeCardDueDates {
+        grid-column: 2;
+        grid-row: 7;
+        align-self: stretch;
+      }
+      #home #homeCardDueDates .due-item {
+        min-height: 124px;
+        align-content: center;
+      }
+      #home .home-recent-head {
+        grid-column: 1 / -1;
+        grid-row: 8;
+        margin-top: 16px;
+      }
+      #home #recentTransactions {
+        grid-column: 1 / -1;
+        grid-row: 9;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      #home #recentTransactions > .empty-state {
+        grid-column: 1 / -1;
+        min-height: 74px;
+        display: grid;
+        place-items: center;
+      }
+
+      #calendar .calendar-card {
+        grid-column: 1;
+        grid-row: 4 / span 4;
+        min-height: 560px;
+      }
+      #calendar .calendar-pace-head {
+        grid-column: 2;
+        grid-row: 4;
+        margin-top: 0;
+      }
+      #calendar .calendar-pace-card {
+        grid-column: 2;
+        grid-row: 5;
+      }
+      #calendar .calendar-upcoming-head {
+        grid-column: 2;
+        grid-row: 6;
+        margin-top: 18px;
+      }
+      #calendar #calendarUpcoming {
+        grid-column: 2;
+        grid-row: 7;
+      }
+      #calendar #calendarUpcoming .transaction,
+      #calendar #calendarUpcoming .card {
+        width: 100%;
+      }
+      .day { min-height: 66px; padding-top: 11px; }
+
+      #assets .net-worth { grid-column: 1 / -1; }
+      #assets .section-head { grid-column: 1 / -1; margin-bottom: -2px; }
+      #assets details { margin: 0; align-self: stretch; }
+      #assets .deposit-list { grid-column: 1 / -1; }
+
+      #expenses .primary { grid-column: 1 / -1; width: 220px; }
+      #expenses .section-head { grid-column: 1 / -1; }
+      #expenses .transaction-list {
+        grid-column: 1 / -1;
+        grid-template-columns: 1fr 1fr;
+      }
+      #settings .form-card { grid-column: 1 / -1; }
+      #settings .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .modal { align-items: center; }
+      .modal-sheet { border-radius: 28px; }
+      .toast { bottom: 35px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand"><div class="logo">1</div><span>1 2 3 Budgeting</span></div>
+      <div class="settings-shortcut"><span>Settings</span><button class="avatar" aria-label="Open settings" data-page="settings">FA</button></div>
+    </header>
+
+    <section class="page active" id="home">
+      <p class="eyebrow">Monday, June 8</p>
+      <h1>Good morning, <span data-profile-name>Fares</span>.</h1>
+      <p class="sub">Here is the shape of your money this month.</p>
+
+      <div class="section-head home-spending-head"><h2>Where it went</h2><button data-page="calendar">View month</button></div>
+      <div class="chart-card">
+        <div class="donut-wrap">
+          <div class="donut" id="spendingDonut" data-label="$0.00&#10;spent"></div>
+          <div class="legend">
+            <div class="empty-state" id="categorySummary">Add expenses to see your spending breakdown.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head home-payday-head"><h2>Payday countdown</h2><button data-page="settings">Change</button></div>
+      <div class="card countdown-card" id="paydayCard">
+        <div class="countdown-top"><span id="paydayMessage">Set your payday in Settings.</span><strong id="paydayDays">--</strong></div>
+        <div class="countdown-track"><div class="countdown-fill" id="paydayProgress"></div></div>
+        <small id="paydayDate" style="color:var(--muted)">No payday configured</small>
+      </div>
+      <div class="section-head home-card-due-head"><h2>Upcoming card payments</h2><button data-page="settings">Manage</button></div>
+      <div class="due-list" id="homeCardDueDates"></div>
+
+      <div class="section-head home-quick-head"><h2>Quick actions</h2></div>
+      <div class="quick-grid">
+        <button class="quick" data-open="expense"><span class="quick-icon">＋</span><strong>Add expense</strong><small>Log a purchase</small></button>
+        <button class="quick" data-open="transfer"><span class="quick-icon">↗</span><strong>Move money</strong><small>Between your banks</small></button>
+        <button class="quick" data-open="paycheck"><span class="quick-icon">$</span><strong>Add paycheck</strong><small>Deposit or split income</small></button>
+      </div>
+
+      <div class="section-head home-recent-head"><h2>Recent spending</h2><button data-page="expenses">See all</button></div>
+      <div class="transaction-list" id="recentTransactions"></div>
+    </section>
+
+    <section class="page" id="calendar">
+      <p class="eyebrow">Spending calendar</p>
+      <h1><span id="calendarMonthTitle">June</span> at a glance.</h1>
+      <p class="sub">Tap a day to see how much you spent.</p>
+      <div class="card calendar-card">
+        <div class="calendar-top">
+          <button class="month-nav" id="previousMonth" aria-label="Previous month">‹</button>
+          <h2 id="calendarMonthLabel">June 2026</h2>
+          <button class="month-nav" id="nextMonth" aria-label="Next month">›</button>
+        </div>
+        <div class="weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="spend-summary"><span id="selectedDate">June 8 spending</span><strong id="selectedSpend">$0.00</strong></div>
+        <div class="calendar-recurring" id="calendarRecurring"></div>
+      </div>
+      <div class="section-head calendar-pace-head"><h2>Monthly pace</h2></div>
+      <div class="card calendar-pace-card">
+        <div class="detail-row"><span>Spent so far</span><strong id="monthlySpent">$0.00</strong></div>
+        <div class="detail-row"><span>Income added</span><strong id="monthlyIncome">$0.00</strong></div>
+        <div style="height:10px;border-radius:10px;background:#edf1ea;overflow:hidden"><div id="spendingProgress" style="width:0;height:100%;background:var(--green);border-radius:10px"></div></div>
+        <p id="spendingPace" style="font-size:12px;color:var(--muted);margin:11px 0 0">Add income and expenses to see your monthly pace.</p>
+      </div>
+      <div class="section-head calendar-upcoming-head"><h2>Upcoming recurring payments</h2></div>
+      <div class="transaction-list" id="calendarUpcoming"></div>
+    </section>
+
+    <section class="page" id="assets">
+      <p class="eyebrow">All accounts</p>
+      <h1>Your whole picture.</h1>
+      <p class="sub">Banks, cash, and investments in one place.</p>
+      <div class="hero net-worth">
+        <div class="hero-label">Total net worth</div>
+        <div class="hero-amount" id="netWorth">$0.00</div>
+      </div>
+
+      <div class="section-head"><h2>Cash accounts</h2><button data-open="transfer">Transfer</button></div>
+      <details open>
+        <summary>
+          <span class="bank-mark chase" data-bank-mark="chase">CHASE</span>
+          <span><span class="bank-name" data-bank-name="chase">Chase</span><span class="bank-type">Checking + savings</span></span>
+          <span class="bank-balance"><span data-bank-total="chase">$0.00</span><i class="chevron">⌄</i></span>
+        </summary>
+        <div class="detail-body">
+          <div class="detail-row"><span>Checking ••4821</span><strong data-balance="chaseChecking">$0.00</strong></div>
+          <div class="detail-row"><span>Savings</span><strong data-balance="chaseSavings">$0.00</strong></div>
+          <div class="detail-row"><span>Savings APY</span><strong data-apy="chase">0.00%</strong></div>
+          <button class="mini-action" data-open="transfer">Move money</button>
+        </div>
+      </details>
+      <details>
+        <summary>
+          <span class="bank-mark sofi" data-bank-mark="sofi">SOFI</span>
+          <span><span class="bank-name" data-bank-name="sofi">Sofi</span><span class="bank-type">Checking + savings</span></span>
+          <span class="bank-balance"><span data-bank-total="sofi">$0.00</span><i class="chevron">⌄</i></span>
+        </summary>
+        <div class="detail-body">
+          <div class="detail-row"><span>Checking</span><strong data-balance="sofiChecking">$0.00</strong></div>
+          <div class="detail-row"><span>Savings ••1903</span><strong data-balance="sofiSavings">$0.00</strong></div>
+          <div class="detail-row"><span>Savings APY</span><strong data-apy="sofi">0.00%</strong></div>
+          <button class="mini-action" data-open="transfer">Move money</button>
+        </div>
+      </details>
+      <details>
+        <summary>
+          <span class="bank-mark mission" data-bank-mark="mission">M</span>
+          <span><span class="bank-name" data-bank-name="mission">Mission</span><span class="bank-type">Checking + savings</span></span>
+          <span class="bank-balance"><span data-bank-total="mission">$0.00</span><i class="chevron">⌄</i></span>
+        </summary>
+        <div class="detail-body">
+          <div class="detail-row"><span>Checking ••7710</span><strong data-balance="missionChecking">$0.00</strong></div>
+          <div class="detail-row"><span>Savings</span><strong data-balance="missionSavings">$0.00</strong></div>
+          <div class="detail-row"><span>Savings APY</span><strong data-apy="mission">0.00%</strong></div>
+          <button class="mini-action" data-open="transfer">Move money</button>
+        </div>
+      </details>
+      <div id="extraCashAccounts"></div>
+
+      <div class="section-head"><h2>Credit cards</h2></div>
+      <details open>
+        <summary>
+          <span class="bank-mark chase">CC</span>
+          <span><span class="bank-name"><span data-bank-name="chase">Chase</span> Credit Card</span><span class="bank-type">Credit card ••1534</span></span>
+          <span class="bank-balance"><span id="creditOwed">$0.00</span><i class="chevron">⌄</i></span>
+        </summary>
+        <div class="detail-body">
+          <div class="detail-row"><span>Amount owed this month</span><strong id="creditOwedDetail">$0.00</strong></div>
+          <div class="detail-row"><span>Monthly due day</span><strong id="creditDueDayDetail">1</strong></div>
+          <div class="detail-row"><span>Last payment</span><strong id="creditLastPaid">Not paid yet</strong></div>
+          <button class="mini-action" data-open="cardPayment">Pay credit card</button>
+        </div>
+      </details>
+      <div id="extraCreditCards"></div>
+
+      <div class="section-head"><h2>Investments</h2></div>
+      <details>
+        <summary>
+          <span class="bank-mark robinhood">RH</span>
+          <span><span class="bank-name">Robinhood</span><span class="bank-type">Individual brokerage</span></span>
+          <span class="bank-balance">$0.00<i class="chevron">⌄</i></span>
+        </summary>
+        <div class="detail-body">
+          <div class="detail-row"><span>Stocks & ETFs</span><strong>$0.00</strong></div>
+          <div class="detail-row"><span>Buying power</span><strong>$0.00</strong></div>
+          <div class="detail-row"><span>Today's return</span><strong style="color:var(--green)">$0.00</strong></div>
+        </div>
+      </details>
+      <div id="extraInvestmentAccounts"></div>
+
+      <div class="section-head"><h2>Recent deposits</h2></div>
+      <div class="deposit-list" id="paycheckHistory"></div>
+    </section>
+
+    <section class="page" id="expenses">
+      <p class="eyebrow">Expense history</p>
+      <h1>Every dollar, clear.</h1>
+      <p class="sub">Review purchases by account, card, and category.</p>
+      <button class="primary" data-open="expense">＋ Add a new expense</button>
+      <div class="section-head"><h2>Recurring payments</h2></div>
+      <div class="transaction-list" id="recurringList"></div>
+      <div class="section-head">
+        <button id="expensePreviousMonth" aria-label="Previous expense month">‹</button>
+        <h2 id="expenseMonthTitle">June transactions</h2>
+        <button id="expenseNextMonth" aria-label="Next expense month">›</button>
+      </div>
+      <div class="transaction-list" id="allTransactions"></div>
+    </section>
+
+    <section class="page" id="settings">
+      <p class="eyebrow">Your account</p>
+      <h1>Settings.</h1>
+      <p class="sub">Change your profile and account details.</p>
+      <form class="card form-card" id="settingsForm">
+        <label>Your name
+          <input id="settingsName" type="text" required>
+        </label>
+        <div class="settings-bank">
+          <h2 style="margin-bottom:14px">Login details</h2>
+          <label>Email address
+            <input id="settingsEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+          </label>
+          <label>New password
+            <input id="settingsPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          </label>
+          <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Your password is not stored in this browser. It will be handled securely when Supabase Auth is connected.</p>
+        </div>
+        <div class="settings-bank">
+          <h2 style="margin-bottom:10px">Data sync</h2>
+          <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Automatic browser sync is on for other open tabs and windows. Cloud and cross-device sync will become available when Supabase is connected.</p>
+          <p class="sync-status" id="syncStatus">Waiting for first sync</p>
+          <button class="primary" id="syncNowButton" type="button" style="margin-top:12px">Sync now</button>
+        </div>
+        <div class="settings-bank">
+          <h2 style="margin-bottom:10px">Payday countdown</h2>
+          <div class="form-row">
+            <label>Next payday<input id="settingsPaydayDate" type="date"></label>
+            <label>Pay frequency
+              <select id="settingsPaydayFrequency"><option value="7">Weekly</option><option value="14">Every 2 weeks</option><option value="15">Twice monthly</option><option value="30">Monthly</option></select>
+            </label>
+          </div>
+        </div>
+        <div class="settings-launchers">
+          <button class="settings-launcher" data-open="bank1Settings" type="button"><strong>Bank 1</strong><small data-bank-name="chase">Chase</small></button>
+          <button class="settings-launcher" data-open="bank2Settings" type="button"><strong>Bank 2</strong><small data-bank-name="sofi">Sofi</small></button>
+          <button class="settings-launcher" data-open="bank3Settings" type="button"><strong>Bank 3</strong><small data-bank-name="mission">Mission</small></button>
+          <button class="settings-launcher" data-open="primaryCardSettings" type="button"><strong>Credit card</strong><small>Edit monthly due day</small></button>
+        </div>
+        <div class="account-builder">
+          <h2>Additional cash accounts</h2>
+          <p style="margin:0;color:var(--muted);font-size:12px">Add another checking, savings, or cash account.</p>
+          <div class="added-account-list" id="extraCashSettings"></div>
+          <button class="primary" data-open="cashAccount" type="button">Add cash account</button>
+        </div>
+        <div class="account-builder">
+          <h2>Investment accounts</h2>
+          <p style="margin:0;color:var(--muted);font-size:12px">Track brokerage, retirement, crypto, and other investments.</p>
+          <div class="added-account-list" id="investmentSettings"></div>
+          <button class="primary" data-open="investmentAccount" type="button">Add investment account</button>
+        </div>
+        <div class="account-builder">
+          <h2>Credit cards</h2>
+          <p style="margin:0;color:var(--muted);font-size:12px">Add cards and set their monthly due days.</p>
+          <div class="added-account-list" id="creditCardSettings"></div>
+          <button class="primary" data-open="creditCardAccount" type="button">Add credit card</button>
+        </div>
+        <button class="primary" type="submit">Save settings</button>
+        <button class="primary" id="logoutButton" type="button" style="background:#fff0eb;color:#a63f2b">Log out</button>
+      </form>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <div class="nav-brand"><div class="logo">1</div><span>1 2 3 Budgeting</span></div>
+    <button class="nav-btn active" data-page="home"><span class="nav-icon">⌂</span><span>Home</span></button>
+    <button class="nav-btn" data-page="calendar"><span class="nav-icon">▦</span><span>Calendar</span></button>
+    <button class="nav-btn" data-page="assets"><span class="nav-icon">◫</span><span>Assets</span></button>
+    <button class="nav-btn" data-page="expenses"><span class="nav-icon">≡</span><span>Expenses</span></button>
+  </nav>
+
+  <div class="modal" id="expenseModal" role="dialog" aria-modal="true" aria-labelledby="expenseTitle">
+    <div class="modal-sheet">
+      <div class="modal-head"><h2 id="expenseTitle">Add an expense</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="expenseForm">
+        <label>What did you buy?
+          <input id="merchant" type="text" placeholder="e.g. Trader Joe's" required>
+        </label>
+        <div class="form-row">
+          <label>Amount
+            <input id="amount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+          </label>
+          <label>Date
+            <input id="expenseDate" type="date" value="2026-06-08" required>
+          </label>
+        </div>
+        <label>Category
+          <select id="category">
+            <option>Food & dining</option><option>Housing</option><option>Shopping</option>
+            <option>Transportation</option><option>Bills</option><option>Entertainment</option><option>Other</option>
+          </select>
+        </label>
+        <label>Payment type
+          <span class="method-toggle">
+            <button type="button" class="active" data-method="Debit">Debit</button>
+            <button type="button" data-method="Credit">Credit</button>
+          </span>
+        </label>
+        <label>Account or card
+          <select id="paymentAccount">
+            <option>Chase debit ••4821</option>
+            <option>Sofi debit ••1903</option>
+            <option>Mission debit ••7710</option>
+          </select>
+        </label>
+        <label class="check-row">
+          <input id="isRecurring" type="checkbox">
+          Make this a recurring payment or subscription
+        </label>
+        <div class="recurring-options" id="recurringOptions">
+          <div class="form-row">
+            <label>Repeats
+              <select id="recurringFrequency">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label>Next payment
+              <input id="recurringNextDate" type="date" value="2026-07-08">
+            </label>
+          </div>
+        </div>
+        <button class="primary" type="submit">Save expense</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="transferModal" role="dialog" aria-modal="true" aria-labelledby="transferTitle">
+    <div class="modal-sheet">
+      <div class="modal-head"><h2 id="transferTitle">Move money</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="transferForm">
+        <label>From
+          <select id="fromBank"></select>
+        </label>
+        <div class="transfer-arrow">↓</div>
+        <label>To
+          <select id="toBank"></select>
+        </label>
+        <label>Amount
+          <input id="transferAmount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+        </label>
+        <button class="primary" type="submit">Review transfer</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="paycheckModal" role="dialog" aria-modal="true" aria-labelledby="paycheckTitle">
+    <div class="modal-sheet">
+      <div class="modal-head"><h2 id="paycheckTitle">Add paycheck</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="paycheckForm">
+        <label>Where did it come from?
+          <input id="paycheckSource" type="text" placeholder="e.g. Employer, freelance, refund" required>
+        </label>
+        <div class="form-row">
+          <label>Check amount
+            <input id="paycheckAmount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+          </label>
+          <label>Date received
+            <input id="paycheckDate" type="date" value="2026-06-08" required>
+          </label>
+        </div>
+        <label>Deposit method
+          <span class="method-toggle">
+            <button type="button" class="active" data-deposit-mode="single">One bank</button>
+            <button type="button" data-deposit-mode="split">Split check</button>
+          </span>
+        </label>
+        <label id="singleBankField">Deposit into
+          <select id="paycheckBank"></select>
+        </label>
+        <div class="split-fields" id="splitFields">
+          <div class="split-row"><label><span data-split-name="chase">Chase</span> checking</label><label>Percent<input class="split-percent" data-bank="chaseChecking" type="number" min="0" max="100" value="60"></label></div>
+          <div class="split-row"><label><span data-split-name="chase">Chase</span> savings</label><label>Percent<input class="split-percent" data-bank="chaseSavings" type="number" min="0" max="100" value="0"></label></div>
+          <div class="split-row"><label><span data-split-name="sofi">Sofi</span> checking</label><label>Percent<input class="split-percent" data-bank="sofiChecking" type="number" min="0" max="100" value="0"></label></div>
+          <div class="split-row"><label><span data-split-name="sofi">Sofi</span> savings</label><label>Percent<input class="split-percent" data-bank="sofiSavings" type="number" min="0" max="100" value="40"></label></div>
+          <div class="split-row"><label><span data-split-name="mission">Mission</span> checking</label><label>Percent<input class="split-percent" data-bank="missionChecking" type="number" min="0" max="100" value="0"></label></div>
+          <div class="split-row"><label><span data-split-name="mission">Mission</span> savings</label><label>Percent<input class="split-percent" data-bank="missionSavings" type="number" min="0" max="100" value="0"></label></div>
+          <div class="detail-row" style="margin:0"><span>Total split</span><strong id="splitTotal">100%</strong></div>
+        </div>
+        <button class="primary" type="submit">Add money</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="cardPaymentModal" role="dialog" aria-modal="true" aria-labelledby="cardPaymentTitle">
+    <div class="modal-sheet">
+      <div class="modal-head"><h2 id="cardPaymentTitle">Pay credit card</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="cardPaymentForm">
+        <div class="detail-row"><span>Current amount owed</span><strong id="paymentAmountOwed">$0.00</strong></div>
+        <label>Payment amount
+          <input id="cardPaymentAmount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+        </label>
+        <label>Pay from
+          <select id="cardPaymentBank"></select>
+        </label>
+        <label>Payment date
+          <input id="cardPaymentDate" type="date" value="2026-06-08" required>
+        </label>
+        <button class="primary" type="submit">Mark as paid</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="cashAccountModal" role="dialog" aria-modal="true" aria-labelledby="cashAccountTitle">
+    <div class="modal-sheet"><div class="modal-head"><h2 id="cashAccountTitle">Add cash account</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="cashAccountForm">
+        <label>Account name<input id="newCashName" type="text" placeholder="e.g. Capital One" required></label>
+        <label>Account type<select id="newCashType"><option>Checking</option><option>Savings</option><option>Cash</option></select></label>
+        <div class="form-row"><label>Starting balance<input id="newCashBalance" type="number" min="0" step="0.01" value="0" required></label><label>APY (%)<input id="newCashApy" type="number" min="0" step="0.01" value="0" required></label></div>
+        <button class="primary" type="submit">Add account</button>
+      </form>
+    </div>
+  </div>
+  <div class="modal" id="investmentAccountModal" role="dialog" aria-modal="true" aria-labelledby="investmentAccountTitle">
+    <div class="modal-sheet"><div class="modal-head"><h2 id="investmentAccountTitle">Add investment account</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="investmentAccountForm">
+        <label>Account name<input id="newInvestmentName" type="text" placeholder="e.g. Fidelity 401(k)" required></label>
+        <label>Account type<select id="newInvestmentType"><option>Brokerage</option><option>401(k)</option><option>IRA</option><option>Crypto</option><option>Other</option></select></label>
+        <label>Current value<input id="newInvestmentBalance" type="number" min="0" step="0.01" value="0" required></label>
+        <button class="primary" type="submit">Add investment</button>
+      </form>
+    </div>
+  </div>
+  <div class="modal" id="creditCardAccountModal" role="dialog" aria-modal="true" aria-labelledby="creditCardAccountTitle">
+    <div class="modal-sheet"><div class="modal-head"><h2 id="creditCardAccountTitle">Add credit card</h2><button class="close" data-close aria-label="Close">×</button></div>
+      <form class="card form-card" id="creditCardAccountForm">
+        <label>Card name<input id="newCreditCardName" type="text" placeholder="e.g. Capital One Venture" required></label>
+        <div class="form-row"><label>Last 4 digits<input id="newCreditCardLastFour" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="1234" required></label><label>Monthly due day<input id="newCreditCardDueDay" type="number" min="1" max="31" value="1" required></label></div>
+        <label>Current balance<input id="newCreditCardBalance" type="number" min="0" step="0.01" value="0" required></label>
+        <button class="primary" type="submit">Add credit card</button>
+      </form>
+    </div>
+  </div>
+  <div class="modal" id="bank1SettingsModal" role="dialog" aria-modal="true" aria-labelledby="bank1SettingsTitle"><div class="modal-sheet"><div class="modal-head"><h2 id="bank1SettingsTitle">Edit Bank 1</h2><button class="close" data-close aria-label="Close">×</button></div><form class="card form-card bank-settings-form" data-bank-settings="chase"><label>Bank name<input id="settingsChaseName" type="text" required></label><label>Checking balance<input id="settingsChaseChecking" type="number" min="0" step="0.01" required></label><label>Savings balance<input id="settingsChaseSavings" type="number" min="0" step="0.01" required></label><label>Savings APY (%)<input id="settingsChaseApy" type="number" min="0" step="0.01" required></label><button class="primary" type="submit">Save Bank 1</button></form></div></div>
+  <div class="modal" id="bank2SettingsModal" role="dialog" aria-modal="true" aria-labelledby="bank2SettingsTitle"><div class="modal-sheet"><div class="modal-head"><h2 id="bank2SettingsTitle">Edit Bank 2</h2><button class="close" data-close aria-label="Close">×</button></div><form class="card form-card bank-settings-form" data-bank-settings="sofi"><label>Bank name<input id="settingsSofiName" type="text" required></label><label>Checking balance<input id="settingsSofiChecking" type="number" min="0" step="0.01" required></label><label>Savings balance<input id="settingsSofiSavings" type="number" min="0" step="0.01" required></label><label>Savings APY (%)<input id="settingsSofiApy" type="number" min="0" step="0.01" required></label><button class="primary" type="submit">Save Bank 2</button></form></div></div>
+  <div class="modal" id="bank3SettingsModal" role="dialog" aria-modal="true" aria-labelledby="bank3SettingsTitle"><div class="modal-sheet"><div class="modal-head"><h2 id="bank3SettingsTitle">Edit Bank 3</h2><button class="close" data-close aria-label="Close">×</button></div><form class="card form-card bank-settings-form" data-bank-settings="mission"><label>Bank name<input id="settingsMissionName" type="text" required></label><label>Checking balance<input id="settingsMissionChecking" type="number" min="0" step="0.01" required></label><label>Savings balance<input id="settingsMissionSavings" type="number" min="0" step="0.01" required></label><label>Savings APY (%)<input id="settingsMissionApy" type="number" min="0" step="0.01" required></label><button class="primary" type="submit">Save Bank 3</button></form></div></div>
+  <div class="modal" id="primaryCardSettingsModal" role="dialog" aria-modal="true" aria-labelledby="primaryCardSettingsTitle"><div class="modal-sheet"><div class="modal-head"><h2 id="primaryCardSettingsTitle">Edit credit card</h2><button class="close" data-close aria-label="Close">×</button></div><form class="card form-card" id="primaryCardSettingsForm"><label>Monthly due day<input id="settingsCreditDueDay" type="number" min="1" max="31" value="1" required></label><p style="margin:0;color:var(--muted);font-size:12px">The card is due on this day every month.</p><button class="primary" type="submit">Save due day</button></form></div></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    if (sessionStorage.getItem("flowly-authenticated") !== "true") window.location.replace("login.html");
+    const demoMerchants = new Set(["Trader Joe's", "Shell", "Netflix", "Target", "Rent"]);
+    let transactions = JSON.parse(localStorage.getItem("flowly-transactions")) || [];
+    transactions = transactions.filter(tx => !(demoMerchants.has(tx.merchant) && tx.date.startsWith("2026-06")));
+    localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+    let balances = JSON.parse(localStorage.getItem("flowly-balances")) || {};
+    if (!("chaseChecking" in balances)) {
+      balances = {
+        chaseChecking: Number(balances.chase || 0), chaseSavings: 0,
+        sofiChecking: Number(balances.sofi || 0), sofiSavings: 0,
+        missionChecking: Number(balances.mission || 0), missionSavings: 0
+      };
+    }
+    localStorage.setItem("flowly-balances", JSON.stringify(balances));
+    let paychecks = JSON.parse(localStorage.getItem("flowly-paychecks")) || [];
+    let profile = JSON.parse(localStorage.getItem("flowly-profile")) || { name: "Fares", email: "" };
+    let bankNames = JSON.parse(localStorage.getItem("flowly-bank-names")) || { chase: "Chase", sofi: "Sofi", mission: "Mission" };
+    let bankApys = JSON.parse(localStorage.getItem("flowly-bank-apys")) || { chase: 0, sofi: 0, mission: 0 };
+    let creditCard = JSON.parse(localStorage.getItem("flowly-credit-card")) || { owed: 0, lastPaid: null, dueDay: 1 };
+    if (!creditCard.dueDay) creditCard.dueDay = 1;
+    let recurringPayments = JSON.parse(localStorage.getItem("flowly-recurring")) || [];
+    let extraCashAccounts = JSON.parse(localStorage.getItem("flowly-extra-cash-accounts")) || [];
+    let investmentAccounts = JSON.parse(localStorage.getItem("flowly-investment-accounts")) || [];
+    let extraCreditCards = JSON.parse(localStorage.getItem("flowly-extra-credit-cards")) || [];
+    let paydaySettings = JSON.parse(localStorage.getItem("flowly-payday-settings")) || { nextDate: "", frequency: 14 };
+    extraCashAccounts.forEach(account => {
+      if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
+    });
+    let selectedMethod = "Debit";
+    let depositMode = "single";
+    let selectedMonth = new Date();
+    selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+    const syncChannel = "BroadcastChannel" in window ? new BroadcastChannel("123-budgeting-sync") : null;
+    const syncDataKeys = [
+      "flowly-transactions", "flowly-balances", "flowly-paychecks", "flowly-profile",
+      "flowly-bank-names", "flowly-bank-apys", "flowly-credit-card", "flowly-recurring",
+      "flowly-extra-cash-accounts", "flowly-investment-accounts", "flowly-extra-credit-cards",
+      "flowly-payday-settings"
+    ];
+    let lastSyncSignature = "";
+
+    const icons = {
+      "Food & dining": "⌁", Housing: "⌂", Shopping: "◇", Transportation: "↗",
+      Bills: "▤", Entertainment: "▷", Other: "•"
+    };
+
+    const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    const prettyDate = value => new Date(value + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const normalizeAccountKey = key => ({ chase: "chaseChecking", sofi: "sofiChecking", mission: "missionChecking" }[key] || key);
+    const baseAccountKeys = ["chaseChecking", "chaseSavings", "sofiChecking", "sofiSavings", "missionChecking", "missionSavings"];
+    const baseCheckingAccountKeys = ["chaseChecking", "sofiChecking", "missionChecking"];
+    const findExtraCash = key => extraCashAccounts.find(account => account.id === normalizeAccountKey(key));
+    const accountBank = key => findExtraCash(key)?.id || normalizeAccountKey(key).replace(/Checking|Savings/, "");
+    const accountType = key => findExtraCash(key)?.type.toLowerCase() || (normalizeAccountKey(key).endsWith("Savings") ? "savings" : "checking");
+    const accountLabel = key => {
+      const extra = findExtraCash(key);
+      return extra ? `${extra.name} ${extra.type.toLowerCase()}` : `${bankNames[accountBank(key)]} ${accountType(key)}`;
+    };
+    const allAccountKeys = () => [...baseAccountKeys, ...extraCashAccounts.map(account => account.id)];
+    const checkingAccountKeys = () => [...baseCheckingAccountKeys, ...extraCashAccounts.map(account => account.id)];
+    const debitPaymentOptions = () => checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
+    const creditPaymentOptions = () => [
+      `<option value="primaryCredit">${escapeHtml(bankNames.chase)} Credit Card ••1534</option>`,
+      ...extraCreditCards.map(card => `<option value="${card.id}">${escapeHtml(card.name)} ••${escapeHtml(card.lastFour)}</option>`)
+    ].join("");
+    const monthKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const selectedMonthKey = () => monthKey(selectedMonth);
+    const monthName = () => selectedMonth.toLocaleDateString("en-US", { month: "long" });
+    const monthLabel = () => selectedMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const selectedMonthTransactions = () => transactions.map((tx, index) => ({ tx, index })).filter(item => item.tx.date.startsWith(selectedMonthKey()));
+    const selectedMonthPaychecks = () => paychecks.filter(check => check.date.startsWith(selectedMonthKey()));
+
+    function renderTransactions() {
+      const monthlyTransactions = selectedMonthTransactions();
+      const html = monthlyTransactions.map(({ tx, index }) => `
+        <div class="transaction">
+          <div class="tx-icon">${icons[tx.category] || "•"}</div>
+          <div><div class="tx-name">${escapeHtml(tx.merchant)}</div><div class="tx-meta">${tx.category} · ${tx.method} · ${prettyDate(tx.date)}</div></div>
+          <div class="tx-actions"><div class="tx-amount">-${money(tx.amount)}</div><button class="delete-expense" data-delete-expense="${index}" aria-label="Delete ${escapeHtml(tx.merchant)}">×</button></div>
+        </div>`).join("");
+      document.getElementById("allTransactions").innerHTML = html || '<div class="card empty-state">No expenses added yet.</div>';
+      document.getElementById("recentTransactions").innerHTML = monthlyTransactions.slice(0, 3).map(({ tx }) => `
+        <div class="transaction">
+          <div class="tx-icon">${icons[tx.category] || "•"}</div>
+          <div><div class="tx-name">${escapeHtml(tx.merchant)}</div><div class="tx-meta">${tx.method} · ${prettyDate(tx.date)}</div></div>
+          <div class="tx-amount">-${money(tx.amount)}</div>
+        </div>`).join("") || '<div class="card empty-state">No recent spending.</div>';
+      document.querySelectorAll("[data-delete-expense]").forEach(button => button.addEventListener("click", () => {
+        const index = Number(button.dataset.deleteExpense);
+        if (!confirm(`Delete ${transactions[index].merchant} for ${money(transactions[index].amount)}?`)) return;
+        const removed = transactions[index];
+        if (removed.paymentType === "Credit") {
+          const card = extraCreditCards.find(item => item.id === removed.creditCardId);
+          if (card) card.balance = Math.max(0, card.balance - removed.amount);
+          else creditCard.owed = Math.max(0, creditCard.owed - removed.amount);
+          localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+          localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
+          renderCreditCard();
+          renderBalances();
+          renderHomePlanning();
+        }
+        if (removed.type === "cardPayment") {
+          const paymentAccount = normalizeAccountKey(removed.bank);
+          balances[paymentAccount] += removed.amount;
+          creditCard.owed += removed.amount;
+          localStorage.setItem("flowly-balances", JSON.stringify(balances));
+          localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+          renderBalances();
+          renderCreditCard();
+        }
+        transactions.splice(index, 1);
+        localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+        renderTransactions();
+        renderCalendar();
+        renderSummary();
+        showToast("Expense deleted");
+      }));
+    }
+
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value;
+      return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById("calendarGrid");
+      const daily = {};
+      const scheduled = {};
+      const key = selectedMonthKey();
+      const daysInMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0).getDate();
+      const firstWeekday = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1).getDay();
+      const today = new Date();
+      const isCurrentMonth = monthKey(today) === key;
+      const initialDay = isCurrentMonth ? today.getDate() : 1;
+      transactions.forEach(tx => {
+        if (tx.date.startsWith(key)) daily[Number(tx.date.slice(-2))] = (daily[Number(tx.date.slice(-2))] || 0) + tx.amount;
+      });
+      recurringPayments.forEach(item => {
+        if (!item.nextDate) return;
+        let occurrence = new Date(item.nextDate + "T12:00:00");
+        const monthEnd = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+        while (occurrence <= monthEnd) {
+          if (monthKey(occurrence) === key) (scheduled[occurrence.getDate()] ||= []).push(item);
+          if (item.frequency === "weekly") occurrence.setDate(occurrence.getDate() + 7);
+          else if (item.frequency === "yearly") occurrence.setFullYear(occurrence.getFullYear() + 1);
+          else occurrence.setMonth(occurrence.getMonth() + 1);
+        }
+      });
+      let html = '<div class="day empty"></div>'.repeat(firstWeekday);
+      for (let day = 1; day <= daysInMonth; day++) {
+        html += `<div class="day ${isCurrentMonth && day === today.getDate() ? "today" : ""} ${day === initialDay ? "selected" : ""}" data-day="${day}" data-spend="${daily[day] || 0}">
+          ${scheduled[day] ? '<i class="recurring-dot" title="Recurring payment scheduled"></i>' : ""}
+          ${day}${daily[day] ? `<span class="spent">${money(daily[day]).replace(".00","")}</span>` : ""}
+        </div>`;
+      }
+      grid.innerHTML = html;
+      const showScheduled = day => {
+        const items = scheduled[day] || [];
+        document.getElementById("calendarRecurring").innerHTML = items.length
+          ? items.map(item => `<div class="calendar-event"><span>↻ ${escapeHtml(item.merchant)} · ${item.frequency}</span><strong>${money(item.amount)}</strong></div>`).join("")
+          : '<div class="empty-state">No recurring payments scheduled for this day.</div>';
+      };
+      document.getElementById("calendarUpcoming").innerHTML = recurringPayments.length
+        ? [...recurringPayments].sort((a, b) => a.nextDate.localeCompare(b.nextDate)).map(item => `
+          <div class="transaction">
+            <div class="tx-icon">↻</div>
+            <div><div class="tx-name">${escapeHtml(item.merchant)}</div><div class="tx-meta">${item.frequency} · ${prettyDate(item.nextDate)}</div></div>
+            <div class="tx-amount">${money(item.amount)}</div>
+          </div>`).join("")
+        : '<div class="card empty-state">No recurring payments scheduled.</div>';
+      document.getElementById("calendarMonthTitle").textContent = monthName();
+      document.getElementById("calendarMonthLabel").textContent = monthLabel();
+      document.getElementById("expenseMonthTitle").textContent = `${monthName()} transactions`;
+      document.getElementById("selectedDate").textContent = `${monthName()} ${initialDay} spending`;
+      document.getElementById("selectedSpend").textContent = money(daily[initialDay] || 0);
+      showScheduled(initialDay);
+      grid.querySelectorAll(".day:not(.empty)").forEach(day => day.addEventListener("click", () => {
+        grid.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+        day.classList.add("selected");
+        document.getElementById("selectedDate").textContent = `${monthName()} ${day.dataset.day} spending`;
+        document.getElementById("selectedSpend").textContent = money(Number(day.dataset.spend));
+        showScheduled(Number(day.dataset.day));
+      }));
+    }
+
+    function renderBalances() {
+      allAccountKeys().forEach(account => {
+        document.querySelectorAll(`[data-balance="${account}"]`).forEach(el => el.textContent = money(balances[account]));
+      });
+      ["chase", "sofi", "mission"].forEach(bank => {
+        const total = balances[bank + "Checking"] + balances[bank + "Savings"];
+        document.querySelectorAll(`[data-bank-total="${bank}"]`).forEach(el => el.textContent = money(total));
+        document.querySelectorAll(`[data-apy="${bank}"]`).forEach(el => el.textContent = Number(bankApys[bank]).toFixed(2) + "%");
+      });
+      renderAddedAccounts();
+      const cashTotal = allAccountKeys().reduce((sum, key) => sum + Number(balances[key] || 0), 0);
+      const investmentTotal = investmentAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+      const cardDebt = Number(creditCard.owed || 0) + extraCreditCards.reduce((sum, card) => sum + Number(card.balance || 0), 0);
+      document.getElementById("netWorth").textContent = money(cashTotal + investmentTotal - cardDebt);
+    }
+
+    function renderAddedAccounts() {
+      document.getElementById("extraCashAccounts").innerHTML = extraCashAccounts.map(account => `
+        <details>
+          <summary>
+            <span class="bank-mark robinhood">${escapeHtml(account.name.slice(0, 3).toUpperCase())}</span>
+            <span><span class="bank-name">${escapeHtml(account.name)}</span><span class="bank-type">${escapeHtml(account.type)}</span></span>
+            <span class="bank-balance">${money(balances[account.id] || 0)}<i class="chevron">⌄</i></span>
+          </summary>
+          <div class="detail-body">
+            <div class="detail-row"><span>Available balance</span><strong>${money(balances[account.id] || 0)}</strong></div>
+            <div class="detail-row"><span>APY</span><strong>${Number(account.apy || 0).toFixed(2)}%</strong></div>
+            <button class="mini-action" data-extra-transfer type="button">Move money</button>
+          </div>
+        </details>`).join("");
+      document.getElementById("extraInvestmentAccounts").innerHTML = investmentAccounts.map(account => `
+        <details>
+          <summary>
+            <span class="bank-mark robinhood">${escapeHtml(account.name.slice(0, 3).toUpperCase())}</span>
+            <span><span class="bank-name">${escapeHtml(account.name)}</span><span class="bank-type">${escapeHtml(account.type)}</span></span>
+            <span class="bank-balance">${money(account.balance)}<i class="chevron">⌄</i></span>
+          </summary>
+          <div class="detail-body"><div class="detail-row"><span>Current value</span><strong>${money(account.balance)}</strong></div></div>
+        </details>`).join("");
+      document.getElementById("extraCreditCards").innerHTML = extraCreditCards.map(card => `
+        <details><summary><span class="bank-mark chase">CC</span><span><span class="bank-name">${escapeHtml(card.name)}</span><span class="bank-type">Credit card ••${escapeHtml(card.lastFour)}</span></span><span class="bank-balance">${money(card.balance)}<i class="chevron">⌄</i></span></summary>
+          <div class="detail-body"><div class="detail-row"><span>Amount owed</span><strong>${money(card.balance)}</strong></div><div class="detail-row"><span>Monthly due day</span><strong>${card.dueDay}</strong></div><p style="margin:0;color:var(--muted);font-size:12px">Manage this card in Settings.</p></div>
+        </details>`).join("");
+      document.getElementById("extraCashSettings").innerHTML = extraCashAccounts.map(account => `
+        <div class="added-account-row" data-cash-settings="${account.id}">
+          <label>Name<input data-extra-name type="text" value="${escapeHtml(account.name)}" required></label>
+          <label>Type<select data-extra-type><option ${account.type === "Checking" ? "selected" : ""}>Checking</option><option ${account.type === "Savings" ? "selected" : ""}>Savings</option><option ${account.type === "Cash" ? "selected" : ""}>Cash</option></select></label>
+          <label>Balance<input data-extra-balance type="number" min="0" step="0.01" value="${Number(balances[account.id] || 0).toFixed(2)}" required></label>
+          <label>APY (%)<input data-extra-apy type="number" min="0" step="0.01" value="${Number(account.apy || 0).toFixed(2)}" required></label>
+          <button class="remove-account" type="button" data-remove-cash="${account.id}">Remove account</button>
+        </div>`).join("") || '<p class="empty-state">No additional cash accounts yet.</p>';
+      document.getElementById("investmentSettings").innerHTML = investmentAccounts.map(account => `
+        <div class="added-account-row" data-investment-settings="${account.id}">
+          <label>Name<input data-investment-name type="text" value="${escapeHtml(account.name)}" required></label>
+          <label>Type<input data-investment-type type="text" value="${escapeHtml(account.type)}" required></label>
+          <label>Current value<input data-investment-balance type="number" min="0" step="0.01" value="${Number(account.balance).toFixed(2)}" required></label>
+          <button class="remove-account" type="button" data-remove-investment="${account.id}">Remove account</button>
+        </div>`).join("") || '<p class="empty-state">No additional investment accounts yet.</p>';
+      document.getElementById("creditCardSettings").innerHTML = extraCreditCards.map(card => `
+        <div class="added-account-row" data-credit-card-settings="${card.id}">
+          <label>Name<input data-card-name type="text" value="${escapeHtml(card.name)}" required></label><label>Last 4<input data-card-last-four type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" value="${escapeHtml(card.lastFour)}" required></label>
+          <label>Balance<input data-card-balance type="number" min="0" step="0.01" value="${Number(card.balance).toFixed(2)}" required></label><label>Due day<input data-card-due-day type="number" min="1" max="31" value="${card.dueDay}" required></label>
+          <button class="remove-account" type="button" data-remove-credit-card="${card.id}">Remove card</button>
+        </div>`).join("") || '<p class="empty-state">No additional credit cards yet.</p>';
+      document.querySelectorAll("[data-extra-transfer]").forEach(button => button.onclick = () => document.getElementById("transferModal").classList.add("open"));
+      document.querySelectorAll("[data-remove-cash]").forEach(button => button.onclick = () => {
+        const id = button.dataset.removeCash;
+        extraCashAccounts = extraCashAccounts.filter(account => account.id !== id);
+        delete balances[id];
+        persistAddedAccounts();
+        renderBalances();
+        renderSettings();
+        showToast("Cash account removed");
+      });
+      document.querySelectorAll("[data-remove-investment]").forEach(button => button.onclick = () => {
+        investmentAccounts = investmentAccounts.filter(account => account.id !== button.dataset.removeInvestment);
+        persistAddedAccounts();
+        renderBalances();
+        renderSettings();
+        showToast("Investment account removed");
+      });
+      document.querySelectorAll("[data-remove-credit-card]").forEach(button => button.onclick = () => {
+        extraCreditCards = extraCreditCards.filter(card => card.id !== button.dataset.removeCreditCard);
+        persistAddedAccounts(); renderBalances(); renderSettings(); renderHomePlanning(); showToast("Credit card removed");
+      });
+    }
+
+    function persistAddedAccounts() {
+      localStorage.setItem("flowly-extra-cash-accounts", JSON.stringify(extraCashAccounts));
+      localStorage.setItem("flowly-investment-accounts", JSON.stringify(investmentAccounts));
+      localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+    }
+
+    function nextMonthlyDate(day) {
+      const today = new Date();
+      const candidate = new Date(today.getFullYear(), today.getMonth(), Math.min(day, new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()), 12);
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+      if (candidate < todayOnly) return new Date(today.getFullYear(), today.getMonth() + 1, Math.min(day, new Date(today.getFullYear(), today.getMonth() + 2, 0).getDate()), 12);
+      return candidate;
+    }
+
+    function renderHomePlanning() {
+      if (paydaySettings.nextDate) {
+        let payday = new Date(paydaySettings.nextDate + "T12:00:00");
+        const today = new Date(); const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+        while (payday < todayOnly) payday.setDate(payday.getDate() + Number(paydaySettings.frequency || 14));
+        const days = Math.max(0, Math.ceil((payday - todayOnly) / 86400000)); const frequency = Number(paydaySettings.frequency || 14);
+        document.getElementById("paydayMessage").textContent = days === 0 ? "Payday is today" : `${days} day${days === 1 ? "" : "s"} until payday`;
+        document.getElementById("paydayDays").textContent = days === 0 ? "Today" : `${days}d`;
+        document.getElementById("paydayDate").textContent = payday.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+        document.getElementById("paydayProgress").style.width = `${Math.max(0, Math.min(100, (frequency - days) / frequency * 100))}%`;
+      } else {
+        document.getElementById("paydayMessage").textContent = "Set your payday in Settings."; document.getElementById("paydayDays").textContent = "--";
+        document.getElementById("paydayDate").textContent = "No payday configured"; document.getElementById("paydayProgress").style.width = "0";
+      }
+      const cards = [{ name: `${bankNames.chase} Credit Card`, balance: creditCard.owed, dueDay: creditCard.dueDay }, ...extraCreditCards]
+        .map(card => ({ ...card, dueDate: nextMonthlyDate(Number(card.dueDay || 1)) })).sort((a, b) => a.dueDate - b.dueDate);
+      const today = new Date(); const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+      document.getElementById("homeCardDueDates").innerHTML = cards.map(card => {
+        const days = Math.max(0, Math.ceil((card.dueDate - todayOnly) / 86400000));
+        const progress = Math.max(0, Math.min(100, (31 - days) / 31 * 100));
+        return `<div class="due-item"><div class="due-top"><span><strong>${escapeHtml(card.name)}</strong><br><span style="color:var(--muted)">${money(card.balance)} due ${card.dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></span><strong>${days === 0 ? "Today" : `${days}d`}</strong></div><div class="due-track"><div class="due-fill" style="width:${progress}%"></div></div></div>`;
+      }).join("");
+    }
+
+    function renderSummary() {
+      const spent = selectedMonthTransactions().reduce((sum, item) => sum + Number(item.tx.amount), 0);
+      const income = selectedMonthPaychecks().reduce((sum, check) => sum + Number(check.amount), 0);
+      document.getElementById("monthlySpent").textContent = money(spent);
+      document.getElementById("monthlyIncome").textContent = money(income);
+      const percent = income ? Math.min(100, spent / income * 100) : 0;
+      document.getElementById("spendingProgress").style.width = percent + "%";
+      document.getElementById("spendingPace").textContent = income ? `You have spent ${Math.round(percent)}% of your added income.` : "Add income and expenses to see your monthly pace.";
+      document.getElementById("spendingDonut").style.background = spent ? "conic-gradient(var(--green) 0 100%)" : "#edf1ea";
+      document.getElementById("spendingDonut").dataset.label = money(spent) + "\nspent";
+    }
+
+    function renderSettings() {
+      document.querySelectorAll("[data-profile-name]").forEach(el => el.textContent = profile.name);
+      document.querySelector(".avatar").textContent = profile.name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
+      Object.entries(bankNames).forEach(([bank, name]) => {
+        document.querySelectorAll(`[data-bank-name="${bank}"]`).forEach(el => el.textContent = name);
+        document.querySelectorAll(`[data-bank-mark="${bank}"]`).forEach(el => el.textContent = name.slice(0, 5).toUpperCase());
+        document.querySelectorAll(`[data-split-name="${bank}"]`).forEach(el => el.textContent = name);
+      });
+      document.getElementById("settingsName").value = profile.name;
+      document.getElementById("settingsEmail").value = profile.email || "";
+      document.getElementById("settingsPassword").value = "";
+      document.getElementById("settingsChaseName").value = bankNames.chase;
+      document.getElementById("settingsSofiName").value = bankNames.sofi;
+      document.getElementById("settingsMissionName").value = bankNames.mission;
+      document.getElementById("settingsChaseChecking").value = balances.chaseChecking.toFixed(2);
+      document.getElementById("settingsChaseSavings").value = balances.chaseSavings.toFixed(2);
+      document.getElementById("settingsSofiChecking").value = balances.sofiChecking.toFixed(2);
+      document.getElementById("settingsSofiSavings").value = balances.sofiSavings.toFixed(2);
+      document.getElementById("settingsMissionChecking").value = balances.missionChecking.toFixed(2);
+      document.getElementById("settingsMissionSavings").value = balances.missionSavings.toFixed(2);
+      document.getElementById("settingsChaseApy").value = Number(bankApys.chase).toFixed(2);
+      document.getElementById("settingsSofiApy").value = Number(bankApys.sofi).toFixed(2);
+      document.getElementById("settingsMissionApy").value = Number(bankApys.mission).toFixed(2);
+      document.getElementById("settingsCreditDueDay").value = creditCard.dueDay;
+      document.getElementById("settingsPaydayDate").value = paydaySettings.nextDate || "";
+      document.getElementById("settingsPaydayFrequency").value = String(paydaySettings.frequency || 14);
+      document.getElementById("paymentAccount").innerHTML = selectedMethod === "Credit"
+        ? `<option>${bankNames.chase} credit ••1534</option>`
+        : `<option>${bankNames.chase} debit ••4821</option><option>${bankNames.sofi} debit ••1903</option><option>${bankNames.mission} debit ••7710</option>`;
+      if (selectedMethod !== "Credit") document.getElementById("paymentAccount").innerHTML = debitPaymentOptions();
+      if (selectedMethod === "Credit") document.getElementById("paymentAccount").innerHTML = creditPaymentOptions();
+      const accountOptions = allAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))}</option>`).join("");
+      document.getElementById("fromBank").innerHTML = accountOptions;
+      document.getElementById("toBank").innerHTML = accountOptions;
+      document.getElementById("paycheckBank").innerHTML = accountOptions;
+      document.getElementById("toBank").value = "chaseSavings";
+      document.getElementById("cardPaymentBank").innerHTML = checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
+      renderAddedAccounts();
+      document.getElementById("cardPaymentBank").innerHTML = checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
+    }
+
+    function renderCreditCard() {
+      document.getElementById("creditOwed").textContent = money(creditCard.owed);
+      document.getElementById("creditOwedDetail").textContent = money(creditCard.owed);
+      document.getElementById("paymentAmountOwed").textContent = money(creditCard.owed);
+      document.getElementById("cardPaymentAmount").max = creditCard.owed || "";
+      document.getElementById("creditLastPaid").textContent = creditCard.lastPaid ? prettyDate(creditCard.lastPaid) : "Not paid yet";
+      document.getElementById("creditDueDayDetail").textContent = creditCard.dueDay;
+    }
+
+    function renderRecurring() {
+      document.getElementById("recurringList").innerHTML = recurringPayments.length ? recurringPayments.map((item, index) => `
+        <div class="transaction">
+          <div class="tx-icon">↻</div>
+          <div><div class="tx-name">${escapeHtml(item.merchant)} <span class="status-pill">${item.frequency}</span></div><div class="tx-meta">${money(item.amount)} · Next ${prettyDate(item.nextDate)} · ${item.method}</div></div>
+          <button class="delete-expense" data-delete-recurring="${index}" aria-label="Cancel recurring payment">×</button>
+        </div>`).join("") : '<div class="card empty-state">No recurring payments yet.</div>';
+      document.querySelectorAll("[data-delete-recurring]").forEach(button => button.addEventListener("click", () => {
+        recurringPayments.splice(Number(button.dataset.deleteRecurring), 1);
+        localStorage.setItem("flowly-recurring", JSON.stringify(recurringPayments));
+        renderRecurring();
+        renderCalendar();
+        showToast("Recurring payment canceled");
+      }));
+    }
+
+    function processRecurringPayments() {
+      const today = new Date().toISOString().slice(0, 10);
+      let added = false;
+      recurringPayments.forEach(item => {
+        if (!item.nextDate) return;
+        while (item.nextDate <= today) {
+          transactions.unshift({
+            merchant: item.merchant,
+            amount: item.amount,
+            category: item.category,
+            method: item.method,
+            paymentType: item.method.toLowerCase().includes("credit") ? "Credit" : "Debit",
+            date: item.nextDate,
+            recurring: true
+          });
+          if (item.method.toLowerCase().includes("credit")) creditCard.owed += item.amount;
+          const next = new Date(item.nextDate + "T12:00:00");
+          if (item.frequency === "weekly") next.setDate(next.getDate() + 7);
+          if (item.frequency === "monthly") next.setMonth(next.getMonth() + 1);
+          if (item.frequency === "yearly") next.setFullYear(next.getFullYear() + 1);
+          item.nextDate = next.toISOString().slice(0, 10);
+          added = true;
+        }
+      });
+      if (added) {
+        localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+        localStorage.setItem("flowly-recurring", JSON.stringify(recurringPayments));
+        localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+      }
+    }
+
+    function renderPaychecks() {
+      document.getElementById("paycheckHistory").innerHTML = paychecks.length ? paychecks.map(check => `
+        <div class="transaction">
+          <div class="tx-icon">$</div>
+          <div><div class="tx-name">${escapeHtml(check.source)}</div><div class="tx-meta">${check.destinations.map(item => `${accountLabel(item.bank)} ${item.percent}%`).join(" · ")} · ${prettyDate(check.date)}</div></div>
+          <div class="tx-amount" style="color:var(--green)">+${money(check.amount)}</div>
+        </div>`).join("") : '<div class="card empty-state">No paychecks added yet.</div>';
+    }
+
+    function changePage(id) {
+      document.querySelectorAll(".page").forEach(page => page.classList.toggle("active", page.id === id));
+      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.page === id));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function updateSyncStatus(timestamp) {
+      const value = timestamp || localStorage.getItem("flowly-last-sync");
+      document.getElementById("syncStatus").textContent = value
+        ? `Last synced ${new Date(value).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+        : "Waiting for first sync";
+    }
+
+    function refreshFromStorage() {
+      transactions = JSON.parse(localStorage.getItem("flowly-transactions")) || [];
+      balances = JSON.parse(localStorage.getItem("flowly-balances")) || {};
+      paychecks = JSON.parse(localStorage.getItem("flowly-paychecks")) || [];
+      profile = JSON.parse(localStorage.getItem("flowly-profile")) || profile;
+      bankNames = JSON.parse(localStorage.getItem("flowly-bank-names")) || bankNames;
+      bankApys = JSON.parse(localStorage.getItem("flowly-bank-apys")) || bankApys;
+      creditCard = JSON.parse(localStorage.getItem("flowly-credit-card")) || creditCard;
+      if (!creditCard.dueDay) creditCard.dueDay = 1;
+      recurringPayments = JSON.parse(localStorage.getItem("flowly-recurring")) || [];
+      extraCashAccounts = JSON.parse(localStorage.getItem("flowly-extra-cash-accounts")) || [];
+      investmentAccounts = JSON.parse(localStorage.getItem("flowly-investment-accounts")) || [];
+      extraCreditCards = JSON.parse(localStorage.getItem("flowly-extra-credit-cards")) || [];
+      paydaySettings = JSON.parse(localStorage.getItem("flowly-payday-settings")) || paydaySettings;
+      extraCashAccounts.forEach(account => {
+        if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
+      });
+      renderTransactions();
+      renderCalendar();
+      renderBalances();
+      renderPaychecks();
+      renderSettings();
+      renderCreditCard();
+      renderRecurring();
+      renderSummary();
+      renderHomePlanning();
+    }
+
+    function performBrowserSync(manual = false) {
+      const signature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
+      if (!manual && signature === lastSyncSignature) {
+        updateSyncStatus();
+        return;
+      }
+      lastSyncSignature = signature;
+      const timestamp = new Date().toISOString();
+      localStorage.setItem("flowly-last-sync", timestamp);
+      syncChannel?.postMessage({ type: "refresh", timestamp });
+      updateSyncStatus(timestamp);
+      if (manual) showToast("Browser data synced");
+    }
+
+    syncChannel?.addEventListener("message", event => {
+      if (event.data?.type !== "refresh") return;
+      refreshFromStorage();
+      lastSyncSignature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
+      updateSyncStatus(event.data.timestamp);
+    });
+    window.addEventListener("storage", event => {
+      if (event.key !== "flowly-last-sync" || !event.newValue) return;
+      refreshFromStorage();
+      lastSyncSignature = syncDataKeys.map(key => localStorage.getItem(key) || "").join("|");
+      updateSyncStatus(event.newValue);
+    });
+
+    document.querySelectorAll("[data-page]").forEach(btn => btn.addEventListener("click", () => changePage(btn.dataset.page)));
+    document.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => {
+      document.getElementById(btn.dataset.open + "Modal").classList.add("open");
+    }));
+    document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal").classList.remove("open")));
+    document.querySelectorAll(".modal").forEach(modal => modal.addEventListener("click", event => {
+      if (event.target === modal) modal.classList.remove("open");
+    }));
+
+    document.querySelectorAll("[data-method]").forEach(btn => btn.addEventListener("click", () => {
+      selectedMethod = btn.dataset.method;
+      document.querySelectorAll("[data-method]").forEach(b => b.classList.toggle("active", b === btn));
+      const account = document.getElementById("paymentAccount");
+      account.innerHTML = selectedMethod === "Credit"
+        ? `<option>${bankNames.chase} credit ••1534</option>`
+        : `<option>${bankNames.chase} debit ••4821</option><option>${bankNames.sofi} debit ••1903</option><option>${bankNames.mission} debit ••7710</option>`;
+    }));
+
+    document.querySelectorAll("[data-method]").forEach(button => button.addEventListener("click", () => {
+      if (selectedMethod === "Credit") document.getElementById("paymentAccount").innerHTML = creditPaymentOptions();
+    }));
+
+    document.getElementById("paymentAccount").addEventListener("focus", event => {
+      if (selectedMethod !== "Credit") event.target.innerHTML = debitPaymentOptions();
+      else event.target.innerHTML = creditPaymentOptions();
+    });
+
+    document.querySelectorAll("[data-deposit-mode]").forEach(btn => btn.addEventListener("click", () => {
+      depositMode = btn.dataset.depositMode;
+      document.querySelectorAll("[data-deposit-mode]").forEach(b => b.classList.toggle("active", b === btn));
+      document.getElementById("singleBankField").style.display = depositMode === "single" ? "block" : "none";
+      document.getElementById("splitFields").classList.toggle("show", depositMode === "split");
+    }));
+
+    document.querySelectorAll(".split-percent").forEach(input => input.addEventListener("input", () => {
+      const total = [...document.querySelectorAll(".split-percent")].reduce((sum, item) => sum + Number(item.value || 0), 0);
+      const output = document.getElementById("splitTotal");
+      output.textContent = `${total}%`;
+      output.style.color = total === 100 ? "var(--green)" : "#c04f32";
+    }));
+
+    function changeMonth(offset) {
+      selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + offset, 1);
+      renderTransactions();
+      renderCalendar();
+      renderSummary();
+    }
+
+    document.getElementById("previousMonth").addEventListener("click", () => changeMonth(-1));
+    document.getElementById("nextMonth").addEventListener("click", () => changeMonth(1));
+    document.getElementById("expensePreviousMonth").addEventListener("click", () => changeMonth(-1));
+    document.getElementById("expenseNextMonth").addEventListener("click", () => changeMonth(1));
+
+    document.getElementById("isRecurring").addEventListener("change", event => {
+      document.getElementById("recurringOptions").classList.toggle("show", event.target.checked);
+    });
+
+    document.getElementById("expenseForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const recurringEnabled = document.getElementById("isRecurring").checked;
+      if (recurringEnabled && !document.getElementById("recurringNextDate").value) return showToast("Choose the next payment date");
+      const tx = {
+        merchant: document.getElementById("merchant").value.trim(),
+        amount: Number(document.getElementById("amount").value),
+        category: document.getElementById("category").value,
+        method: document.getElementById("paymentAccount").value,
+        paymentType: selectedMethod,
+        date: document.getElementById("expenseDate").value
+      };
+      transactions.unshift(tx);
+      if (selectedMethod === "Credit") {
+        tx.creditCardId = document.getElementById("paymentAccount").value;
+        const selectedCard = extraCreditCards.find(card => card.id === tx.creditCardId);
+        if (selectedCard) selectedCard.balance += tx.amount;
+        else creditCard.owed += tx.amount;
+        localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+        localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
+        renderCreditCard();
+        renderBalances();
+        renderHomePlanning();
+      }
+      if (recurringEnabled) {
+        recurringPayments.unshift({
+          merchant: tx.merchant,
+          amount: tx.amount,
+          category: tx.category,
+          method: tx.method,
+          frequency: document.getElementById("recurringFrequency").value,
+          nextDate: document.getElementById("recurringNextDate").value
+        });
+        localStorage.setItem("flowly-recurring", JSON.stringify(recurringPayments));
+        renderRecurring();
+        renderCalendar();
+      }
+      localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+      renderTransactions();
+      renderCalendar();
+      renderSummary();
+      event.target.reset();
+      document.getElementById("expenseDate").value = todayValue;
+      document.getElementById("recurringOptions").classList.remove("show");
+      document.getElementById("expenseModal").classList.remove("open");
+      showToast(`${money(tx.amount)} expense added`);
+    });
+
+    document.getElementById("transferForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const from = document.getElementById("fromBank").value;
+      const to = document.getElementById("toBank").value;
+      const amount = Number(document.getElementById("transferAmount").value);
+      if (from === to) return showToast("Choose two different banks");
+      if (amount > balances[from]) return showToast("That amount is above your available balance");
+      balances[from] -= amount;
+      balances[to] += amount;
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+      renderBalances();
+      event.target.reset();
+      document.getElementById("transferModal").classList.remove("open");
+      showToast(`${money(amount)} transfer completed`);
+    });
+
+    document.getElementById("paycheckForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const amount = Number(document.getElementById("paycheckAmount").value);
+      let destinations;
+      if (depositMode === "single") {
+        destinations = [{ bank: document.getElementById("paycheckBank").value, percent: 100 }];
+      } else {
+        destinations = [...document.querySelectorAll(".split-percent")].map(input => ({ bank: input.dataset.bank, percent: Number(input.value || 0) }));
+        if (destinations.reduce((sum, item) => sum + item.percent, 0) !== 100) return showToast("Your paycheck split must total 100%");
+      }
+      destinations.forEach(item => balances[normalizeAccountKey(item.bank)] += amount * item.percent / 100);
+      paychecks.unshift({
+        source: document.getElementById("paycheckSource").value.trim(),
+        amount,
+        date: document.getElementById("paycheckDate").value,
+        destinations: destinations.filter(item => item.percent > 0)
+      });
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+      localStorage.setItem("flowly-paychecks", JSON.stringify(paychecks));
+      renderBalances();
+      renderPaychecks();
+      renderSummary();
+      event.target.reset();
+      document.getElementById("paycheckDate").value = todayValue;
+      document.getElementById("paycheckModal").classList.remove("open");
+      showToast(`${money(amount)} paycheck added`);
+    });
+
+    document.getElementById("cardPaymentForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const amount = Number(document.getElementById("cardPaymentAmount").value);
+      const bank = document.getElementById("cardPaymentBank").value;
+      const date = document.getElementById("cardPaymentDate").value;
+      if (!creditCard.owed) return showToast("Your credit card balance is already paid");
+      if (amount > creditCard.owed) return showToast("Payment cannot exceed the amount owed");
+      if (amount > balances[bank]) return showToast(`Not enough money in ${accountLabel(bank)}`);
+      balances[bank] -= amount;
+      creditCard.owed -= amount;
+      creditCard.lastPaid = date;
+      transactions.unshift({
+        merchant: `${bankNames.chase} Credit Card Payment`,
+        amount,
+        category: "Bills",
+        method: `${accountLabel(bank)} debit`,
+        type: "cardPayment",
+        bank,
+        date
+      });
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+      localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+      localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+      renderBalances();
+      renderCreditCard();
+      renderTransactions();
+      renderCalendar();
+      renderSummary();
+      event.target.reset();
+      document.getElementById("cardPaymentDate").value = todayValue;
+      document.getElementById("cardPaymentModal").classList.remove("open");
+      showToast(`${money(amount)} card payment added to expenses`);
+    });
+
+    document.getElementById("cashAccountForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const name = document.getElementById("newCashName").value.trim();
+      if (!name) return showToast("Enter an account name");
+      const id = `extraCash-${Date.now()}`;
+      extraCashAccounts.push({
+        id,
+        name,
+        type: document.getElementById("newCashType").value,
+        apy: Number(document.getElementById("newCashApy").value || 0)
+      });
+      balances[id] = Number(document.getElementById("newCashBalance").value || 0);
+      persistAddedAccounts();
+      document.getElementById("newCashName").value = "";
+      document.getElementById("newCashBalance").value = "0";
+      document.getElementById("newCashApy").value = "0";
+      renderBalances();
+      renderSettings();
+      document.getElementById("cashAccountModal").classList.remove("open");
+      showToast("Cash account added");
+    });
+
+    document.getElementById("investmentAccountForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const name = document.getElementById("newInvestmentName").value.trim();
+      if (!name) return showToast("Enter an investment account name");
+      investmentAccounts.push({
+        id: `investment-${Date.now()}`,
+        name,
+        type: document.getElementById("newInvestmentType").value,
+        balance: Number(document.getElementById("newInvestmentBalance").value || 0)
+      });
+      persistAddedAccounts();
+      document.getElementById("newInvestmentName").value = "";
+      document.getElementById("newInvestmentBalance").value = "0";
+      renderBalances();
+      renderSettings();
+      document.getElementById("investmentAccountModal").classList.remove("open");
+      showToast("Investment account added");
+    });
+
+    document.getElementById("creditCardAccountForm").addEventListener("submit", event => {
+      event.preventDefault();
+      extraCreditCards.push({
+        id: `creditCard-${Date.now()}`, name: document.getElementById("newCreditCardName").value.trim(),
+        lastFour: document.getElementById("newCreditCardLastFour").value, dueDay: Number(document.getElementById("newCreditCardDueDay").value),
+        balance: Number(document.getElementById("newCreditCardBalance").value)
+      });
+      persistAddedAccounts(); event.target.reset(); document.getElementById("newCreditCardDueDay").value = "1"; document.getElementById("newCreditCardBalance").value = "0";
+      renderBalances(); renderSettings(); renderHomePlanning(); document.getElementById("creditCardAccountModal").classList.remove("open"); showToast("Credit card added");
+    });
+
+    document.querySelectorAll(".bank-settings-form").forEach(form => form.addEventListener("submit", event => {
+      event.preventDefault();
+      const bank = form.dataset.bankSettings;
+      const prefix = { chase: "Chase", sofi: "Sofi", mission: "Mission" }[bank];
+      bankNames[bank] = document.getElementById(`settings${prefix}Name`).value.trim();
+      balances[`${bank}Checking`] = Number(document.getElementById(`settings${prefix}Checking`).value);
+      balances[`${bank}Savings`] = Number(document.getElementById(`settings${prefix}Savings`).value);
+      bankApys[bank] = Number(document.getElementById(`settings${prefix}Apy`).value);
+      localStorage.setItem("flowly-bank-names", JSON.stringify(bankNames));
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+      localStorage.setItem("flowly-bank-apys", JSON.stringify(bankApys));
+      renderSettings(); renderBalances(); renderHomePlanning();
+      form.closest(".modal").classList.remove("open"); performBrowserSync(); showToast(`${bankNames[bank]} updated`);
+    }));
+
+    document.getElementById("primaryCardSettingsForm").addEventListener("submit", event => {
+      event.preventDefault();
+      creditCard.dueDay = Number(document.getElementById("settingsCreditDueDay").value);
+      localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+      renderCreditCard(); renderHomePlanning(); event.target.closest(".modal").classList.remove("open"); performBrowserSync();
+      showToast("Credit card due day updated");
+    });
+
+    document.getElementById("syncNowButton").addEventListener("click", () => {
+      document.getElementById("settingsForm").requestSubmit();
+      setTimeout(() => performBrowserSync(true), 0);
+    });
+
+    document.getElementById("settingsForm").addEventListener("submit", event => {
+      event.preventDefault();
+      profile.name = document.getElementById("settingsName").value.trim();
+      profile.email = document.getElementById("settingsEmail").value.trim();
+      const requestedPassword = document.getElementById("settingsPassword").value;
+      bankNames = {
+        chase: document.getElementById("settingsChaseName").value.trim(),
+        sofi: document.getElementById("settingsSofiName").value.trim(),
+        mission: document.getElementById("settingsMissionName").value.trim()
+      };
+      balances = {
+        chaseChecking: Number(document.getElementById("settingsChaseChecking").value),
+        chaseSavings: Number(document.getElementById("settingsChaseSavings").value),
+        sofiChecking: Number(document.getElementById("settingsSofiChecking").value),
+        sofiSavings: Number(document.getElementById("settingsSofiSavings").value),
+        missionChecking: Number(document.getElementById("settingsMissionChecking").value),
+        missionSavings: Number(document.getElementById("settingsMissionSavings").value)
+      };
+      bankApys = {
+        chase: Number(document.getElementById("settingsChaseApy").value),
+        sofi: Number(document.getElementById("settingsSofiApy").value),
+        mission: Number(document.getElementById("settingsMissionApy").value)
+      };
+      document.querySelectorAll("[data-cash-settings]").forEach(row => {
+        const account = extraCashAccounts.find(item => item.id === row.dataset.cashSettings);
+        account.name = row.querySelector("[data-extra-name]").value.trim();
+        account.type = row.querySelector("[data-extra-type]").value;
+        account.apy = Number(row.querySelector("[data-extra-apy]").value);
+        balances[account.id] = Number(row.querySelector("[data-extra-balance]").value);
+      });
+      document.querySelectorAll("[data-investment-settings]").forEach(row => {
+        const account = investmentAccounts.find(item => item.id === row.dataset.investmentSettings);
+        account.name = row.querySelector("[data-investment-name]").value.trim();
+        account.type = row.querySelector("[data-investment-type]").value.trim();
+        account.balance = Number(row.querySelector("[data-investment-balance]").value);
+      });
+      document.querySelectorAll("[data-credit-card-settings]").forEach(row => {
+        const card = extraCreditCards.find(item => item.id === row.dataset.creditCardSettings);
+        card.name = row.querySelector("[data-card-name]").value.trim(); card.lastFour = row.querySelector("[data-card-last-four]").value;
+        card.balance = Number(row.querySelector("[data-card-balance]").value); card.dueDay = Number(row.querySelector("[data-card-due-day]").value);
+      });
+      creditCard.dueDay = Number(document.getElementById("settingsCreditDueDay").value);
+      paydaySettings = { nextDate: document.getElementById("settingsPaydayDate").value, frequency: Number(document.getElementById("settingsPaydayFrequency").value) };
+      localStorage.setItem("flowly-profile", JSON.stringify(profile));
+      localStorage.setItem("flowly-bank-names", JSON.stringify(bankNames));
+      localStorage.setItem("flowly-balances", JSON.stringify(balances));
+      localStorage.setItem("flowly-bank-apys", JSON.stringify(bankApys));
+      localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+      localStorage.setItem("flowly-payday-settings", JSON.stringify(paydaySettings));
+      persistAddedAccounts();
+      renderSettings();
+      renderBalances();
+      renderPaychecks();
+      renderCreditCard();
+      renderHomePlanning();
+      document.getElementById("settingsPassword").value = "";
+      performBrowserSync();
+      showToast(requestedPassword ? "Settings saved. Password awaits Supabase connection." : "Settings saved");
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      sessionStorage.removeItem("flowly-authenticated");
+      window.location.href = "login.html";
+    });
+
+    processRecurringPayments();
+    const todayValue = new Date().toISOString().slice(0, 10);
+    document.getElementById("expenseDate").value = todayValue;
+    document.getElementById("paycheckDate").value = todayValue;
+    document.getElementById("cardPaymentDate").value = todayValue;
+    const nextMonthDate = new Date();
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    document.getElementById("recurringNextDate").value = nextMonthDate.toISOString().slice(0, 10);
+    renderTransactions();
+    renderCalendar();
+    renderBalances();
+    renderPaychecks();
+    renderSettings();
+    renderSummary();
+    renderCreditCard();
+    renderRecurring();
+    renderHomePlanning();
+    updateSyncStatus();
+    performBrowserSync();
+    setInterval(() => performBrowserSync(), 10000);
+    window.addEventListener("focus", () => {
+      refreshFromStorage();
+      performBrowserSync();
+    });
+  </script>
+</body>
+</html>

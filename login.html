@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0c3d30">
+  <title>1 2 3 Budgeting Login</title>
+  <style>
+    :root {
+      --ink: #10221f;
+      --muted: #71807c;
+      --paper: #f2f5ee;
+      --card: #fff;
+      --green: #1b694f;
+      --green-dark: #0c3d30;
+      --lime: #c9f27b;
+      --peach: #ffb58f;
+      --line: #dde5dc;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(201,242,123,.28), transparent 26rem),
+        radial-gradient(circle at 88% 88%, rgba(255,181,143,.17), transparent 24rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+
+    button, input { font: inherit; }
+
+    .auth-shell {
+      width: min(100%, 1050px);
+      min-height: 620px;
+      display: grid;
+      grid-template-columns: .92fr 1.08fr;
+      overflow: hidden;
+      border-radius: 32px;
+      background: white;
+      box-shadow: 0 28px 80px rgba(17,52,42,.14);
+    }
+
+    .welcome {
+      position: relative;
+      overflow: hidden;
+      padding: 48px;
+      color: white;
+      background: var(--green-dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .welcome::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -170px;
+      bottom: -150px;
+      border: 62px solid rgba(201,242,123,.12);
+      border-radius: 50%;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 23px; font-weight: 900; }
+    .logo {
+      width: 43px; height: 43px; display: grid; place-items: center;
+      border-radius: 14px; color: var(--green-dark); background: var(--lime);
+      transform: rotate(-4deg);
+    }
+    .welcome-copy { position: relative; z-index: 1; max-width: 370px; }
+    .welcome h1 { margin: 0 0 16px; font-size: clamp(34px, 5vw, 55px); line-height: 1; letter-spacing: -2px; }
+    .welcome p { color: #bdd0c9; line-height: 1.65; }
+    .feature { display: flex; gap: 10px; align-items: center; margin-top: 13px; color: #d8e5e0; font-size: 13px; }
+    .feature i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--lime); color: var(--green-dark); font-style: normal; font-weight: 900; }
+
+    .auth-panel { padding: 52px clamp(30px, 6vw, 74px); display: grid; align-content: center; }
+    .auth-view { display: none; animation: rise .25s ease; }
+    .auth-view.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(7px); } }
+
+    .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.3px; }
+    h2 { margin: 0; font-size: 34px; letter-spacing: -1.2px; }
+    .sub { margin: 9px 0 28px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    form { display: grid; gap: 17px; }
+    label { color: var(--muted); font-size: 12px; font-weight: 750; }
+    input {
+      width: 100%;
+      margin-top: 7px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      background: #fafbf9;
+      outline: none;
+    }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(27,105,79,.1); }
+    .primary {
+      border: 0; border-radius: 14px; padding: 15px;
+      color: white; background: var(--green-dark); font-weight: 850; cursor: pointer;
+    }
+    .primary:hover { background: #145641; }
+    .switch { margin: 22px 0 0; text-align: center; color: var(--muted); font-size: 13px; }
+    .link-button { padding: 0; border: 0; background: transparent; color: var(--green); font-weight: 850; cursor: pointer; }
+    .error { display: none; margin: 0; color: #b24632; background: #fff0eb; border-radius: 11px; padding: 10px 12px; font-size: 12px; }
+    .error.show { display: block; }
+    .back { margin-bottom: 20px; }
+    .demo-note { margin-top: 18px; color: var(--muted); font-size: 11px; line-height: 1.45; text-align: center; }
+
+    @media (max-width: 760px) {
+      body { padding: 0; display: block; }
+      .auth-shell { min-height: 100vh; display: block; border-radius: 0; }
+      .welcome { min-height: 235px; padding: 28px 24px; }
+      .welcome-copy { margin-top: 34px; }
+      .welcome h1 { font-size: 34px; }
+      .welcome p, .feature { display: none; }
+      .auth-panel { padding: 34px 24px 50px; }
+      h2 { font-size: 29px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="welcome">
+      <div class="brand"><span class="logo">1</span><span>1 2 3 Budgeting</span></div>
+      <div class="welcome-copy">
+        <h1>Your money, in focus.</h1>
+        <p>Track spending, organize every account, and make each paycheck work with intention.</p>
+        <div class="feature"><i>✓</i><span>Monthly expense history</span></div>
+        <div class="feature"><i>✓</i><span>Checking, savings, and credit cards</span></div>
+        <div class="feature"><i>✓</i><span>Paycheck splits and recurring payments</span></div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-view active" id="loginView">
+        <p class="eyebrow">Welcome back</p>
+        <h2>Log in to 1 2 3 Budgeting.</h2>
+        <p class="sub">Enter the email and password you used to create your account.</p>
+        <form id="loginForm">
+          <p class="error" id="loginError"></p>
+          <label>Email address
+            <input id="loginEmail" type="email" autocomplete="email" required>
+          </label>
+          <label>Password
+            <input id="loginPassword" type="password" autocomplete="current-password" minlength="8" required>
+          </label>
+          <button class="primary" type="submit">Log in</button>
+        </form>
+        <p class="switch">New to 1 2 3 Budgeting? <button class="link-button" data-view="signupView">Create an account</button></p>
+        <p class="demo-note">This page currently uses local demo authentication. It is ready to be replaced with Supabase Auth.</p>
+      </div>
+
+      <div class="auth-view" id="signupView">
+        <button class="link-button back" data-view="loginView">← Back to login</button>
+        <p class="eyebrow">Create your account</p>
+        <h2>Start with the basics.</h2>
+        <p class="sub">Use an email and a password with at least eight characters.</p>
+        <form id="signupForm">
+          <p class="error" id="signupError"></p>
+          <label>Email address
+            <input id="signupEmail" type="email" autocomplete="email" required>
+          </label>
+          <label>Password
+            <input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label>Confirm password
+            <input id="signupConfirm" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <button class="primary" type="submit">Continue</button>
+        </form>
+        <p class="switch">Already have an account? <button class="link-button" data-view="loginView">Log in</button></p>
+      </div>
+
+      <div class="auth-view" id="profileView">
+        <p class="eyebrow">One last step</p>
+        <h2>What should we call you?</h2>
+        <p class="sub">Your full name will appear in your greeting and Settings page.</p>
+        <form id="profileForm">
+          <p class="error" id="profileError"></p>
+          <label>Full name
+            <input id="fullName" type="text" autocomplete="name" placeholder="First and last name" required>
+          </label>
+          <button class="primary" type="submit">Open my budget</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let pendingSignup = null;
+
+    function showView(id) {
+      document.querySelectorAll(".auth-view").forEach(view => view.classList.toggle("active", view.id === id));
+      document.querySelectorAll(".error").forEach(error => error.classList.remove("show"));
+    }
+
+    function showError(id, message) {
+      const error = document.getElementById(id);
+      error.textContent = message;
+      error.classList.add("show");
+    }
+
+    function openApp() {
+      const isLaptop = window.matchMedia("(min-width: 900px)").matches;
+      window.location.href = isLaptop ? "laptop.html" : "index.html";
+    }
+
+    async function hashPassword(password) {
+      const bytes = new TextEncoder().encode(password);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    document.querySelectorAll("[data-view]").forEach(button => {
+      button.addEventListener("click", () => showView(button.dataset.view));
+    });
+
+    document.getElementById("signupForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const email = document.getElementById("signupEmail").value.trim().toLowerCase();
+      const password = document.getElementById("signupPassword").value;
+      const confirm = document.getElementById("signupConfirm").value;
+      if (password !== confirm) return showError("signupError", "The passwords do not match.");
+      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
+      if (accounts.some(account => account.email === email)) return showError("signupError", "An account already exists with this email.");
+      pendingSignup = { email, passwordHash: await hashPassword(password) };
+      showView("profileView");
+      document.getElementById("fullName").focus();
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (!pendingSignup) return showView("signupView");
+      const name = document.getElementById("fullName").value.trim();
+      if (name.split(/\s+/).length < 2) return showError("profileError", "Please enter your full name.");
+      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
+      accounts.push({ email: pendingSignup.email, passwordHash: pendingSignup.passwordHash, name });
+      localStorage.setItem("flowly-demo-users", JSON.stringify(accounts));
+      localStorage.setItem("flowly-profile", JSON.stringify({ name, email: pendingSignup.email }));
+      sessionStorage.setItem("flowly-authenticated", "true");
+      openApp();
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const password = document.getElementById("loginPassword").value;
+      const accounts = JSON.parse(localStorage.getItem("flowly-demo-users")) || [];
+      const passwordHash = await hashPassword(password);
+      const account = accounts.find(item => item.email === email && item.passwordHash === passwordHash);
+      if (!account) return showError("loginError", "That email or password is incorrect.");
+      localStorage.setItem("flowly-profile", JSON.stringify({ name: account.name, email: account.email }));
+      sessionStorage.setItem("flowly-authenticated", "true");
+      openApp();
+    });
+  </script>
+</body>
+</html>
