@@ -603,7 +603,7 @@
           <div class="split-row"><label><span data-split-name="mission">Mission</span> savings</label><label>Percent<input class="split-percent" data-bank="missionSavings" type="number" min="0" max="100" value="0"></label></div>
           <div class="detail-row" style="margin:0"><span>Total split</span><strong id="splitTotal">100%</strong></div>
         </div>
-        <button class="primary" type="submit">Add money</button>
+        <button class="primary" id="paycheckSubmitButton" type="submit">Add money</button>
       </form>
     </div>
   </div>
@@ -799,6 +799,7 @@
     repairDebitExpenseBalances();
     let selectedMethod = "Debit";
     let depositMode = "single";
+    let editingPaycheckIndex = null;
     let selectedMonth = new Date();
     selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
     const syncChannel = "BroadcastChannel" in window ? new BroadcastChannel("123-budgeting-sync") : null;
@@ -1269,13 +1270,54 @@
       }
     }
 
+    function applyPaycheckToBalances(check, direction = 1) {
+      check.destinations.forEach(item => {
+        const key = normalizeAccountKey(item.bank);
+        balances[key] = Number(balances[key] || 0) + direction * Number(check.amount) * Number(item.percent) / 100;
+      });
+    }
+
     function renderPaychecks() {
-      document.getElementById("paycheckHistory").innerHTML = paychecks.length ? paychecks.map(check => `
+      document.getElementById("paycheckHistory").innerHTML = paychecks.length ? paychecks.map((check, index) => `
         <div class="transaction">
           <div class="tx-icon">$</div>
           <div><div class="tx-name">${escapeHtml(check.source)}</div><div class="tx-meta">${check.destinations.map(item => `${accountLabel(item.bank)} ${item.percent}%`).join(" · ")} · ${prettyDate(check.date)}</div></div>
-          <div class="tx-amount" style="color:var(--green)">+${money(check.amount)}</div>
+          <div class="tx-actions"><div class="tx-amount" style="color:var(--green)">+${money(check.amount)}</div><button class="edit-expense" data-edit-paycheck="${index}" type="button">Edit</button><button class="delete-expense" data-delete-paycheck="${index}" type="button" aria-label="Delete deposit">×</button></div>
         </div>`).join("") : '<div class="card empty-state">No paychecks added yet.</div>';
+      document.querySelectorAll("[data-delete-paycheck]").forEach(button => button.addEventListener("click", () => {
+        const index = Number(button.dataset.deletePaycheck);
+        const check = paychecks[index];
+        if (!confirm(`Delete the ${money(check.amount)} deposit from ${check.source}?`)) return;
+        applyPaycheckToBalances(check, -1);
+        paychecks.splice(index, 1);
+        localStorage.setItem("flowly-balances", JSON.stringify(balances));
+        localStorage.setItem("flowly-paychecks", JSON.stringify(paychecks));
+        renderBalances();
+        renderPaychecks();
+        renderSummary();
+        showToast("Deposit deleted");
+      }));
+      document.querySelectorAll("[data-edit-paycheck]").forEach(button => button.addEventListener("click", () => {
+        const index = Number(button.dataset.editPaycheck);
+        const check = paychecks[index];
+        editingPaycheckIndex = index;
+        document.getElementById("paycheckTitle").textContent = "Edit deposit";
+        document.getElementById("paycheckSubmitButton").textContent = "Save deposit";
+        document.getElementById("paycheckSource").value = check.source;
+        document.getElementById("paycheckAmount").value = check.amount;
+        document.getElementById("paycheckDate").value = check.date;
+        const isSingle = check.destinations.length === 1 && Number(check.destinations[0].percent) === 100;
+        depositMode = isSingle ? "single" : "split";
+        document.querySelectorAll("[data-deposit-mode]").forEach(item => item.classList.toggle("active", item.dataset.depositMode === depositMode));
+        document.getElementById("singleBankField").style.display = isSingle ? "block" : "none";
+        document.getElementById("splitFields").classList.toggle("show", !isSingle);
+        if (isSingle) document.getElementById("paycheckBank").value = check.destinations[0].bank;
+        document.querySelectorAll(".split-percent").forEach(input => {
+          input.value = check.destinations.find(item => item.bank === input.dataset.bank)?.percent || 0;
+        });
+        updateSplitTotal();
+        document.getElementById("paycheckModal").classList.add("open");
+      }));
     }
 
     function changePage(id) {
@@ -1435,6 +1477,17 @@
 
     document.querySelectorAll("[data-page]").forEach(btn => btn.addEventListener("click", () => changePage(btn.dataset.page)));
     document.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => {
+      if (btn.dataset.open === "paycheck") {
+        editingPaycheckIndex = null;
+        depositMode = "single";
+        document.getElementById("paycheckForm").reset();
+        document.getElementById("paycheckTitle").textContent = "Add paycheck";
+        document.getElementById("paycheckSubmitButton").textContent = "Add money";
+        document.getElementById("paycheckDate").value = new Date().toISOString().slice(0, 10);
+        document.querySelectorAll("[data-deposit-mode]").forEach(item => item.classList.toggle("active", item.dataset.depositMode === "single"));
+        document.getElementById("singleBankField").style.display = "block";
+        document.getElementById("splitFields").classList.remove("show");
+      }
       document.getElementById(btn.dataset.open + "Modal").classList.add("open");
     }));
     document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal").classList.remove("open")));
@@ -1465,12 +1518,15 @@
       document.getElementById("splitFields").classList.toggle("show", depositMode === "split");
     }));
 
-    document.querySelectorAll(".split-percent").forEach(input => input.addEventListener("input", () => {
+    function updateSplitTotal() {
       const total = [...document.querySelectorAll(".split-percent")].reduce((sum, item) => sum + Number(item.value || 0), 0);
       const output = document.getElementById("splitTotal");
       output.textContent = `${total}%`;
       output.style.color = total === 100 ? "var(--green)" : "#c04f32";
-    }));
+    }
+    document.getElementById("splitFields").addEventListener("input", event => {
+      if (event.target.classList.contains("split-percent")) updateSplitTotal();
+    });
 
     function changeMonth(offset) {
       selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + offset, 1);
@@ -1575,22 +1631,34 @@
         destinations = [...document.querySelectorAll(".split-percent")].map(input => ({ bank: input.dataset.bank, percent: Number(input.value || 0) }));
         if (destinations.reduce((sum, item) => sum + item.percent, 0) !== 100) return showToast("Your paycheck split must total 100%");
       }
-      destinations.forEach(item => balances[normalizeAccountKey(item.bank)] += amount * item.percent / 100);
-      paychecks.unshift({
+      const check = {
         source: document.getElementById("paycheckSource").value.trim(),
         amount,
         date: document.getElementById("paycheckDate").value,
         destinations: destinations.filter(item => item.percent > 0)
-      });
+      };
+      if (editingPaycheckIndex === null) paychecks.unshift(check);
+      else {
+        applyPaycheckToBalances(paychecks[editingPaycheckIndex], -1);
+        paychecks[editingPaycheckIndex] = check;
+      }
+      applyPaycheckToBalances(check);
       localStorage.setItem("flowly-balances", JSON.stringify(balances));
       localStorage.setItem("flowly-paychecks", JSON.stringify(paychecks));
       renderBalances();
       renderPaychecks();
       renderSummary();
       event.target.reset();
+      editingPaycheckIndex = null;
+      depositMode = "single";
+      document.getElementById("paycheckTitle").textContent = "Add paycheck";
+      document.getElementById("paycheckSubmitButton").textContent = "Add money";
+      document.querySelectorAll("[data-deposit-mode]").forEach(item => item.classList.toggle("active", item.dataset.depositMode === "single"));
+      document.getElementById("singleBankField").style.display = "block";
+      document.getElementById("splitFields").classList.remove("show");
       document.getElementById("paycheckDate").value = todayValue;
       document.getElementById("paycheckModal").classList.remove("open");
-      showToast(`${money(amount)} paycheck added`);
+      showToast(`${money(amount)} deposit saved`);
     });
 
     document.getElementById("cardPaymentForm").addEventListener("submit", event => {
