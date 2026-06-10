@@ -972,6 +972,7 @@
     let selectedMethod = "Debit";
     let depositMode = "single";
     let editingPaycheckIndex = null;
+    let selectedPaymentCardId = null;
     let selectedMonth = new Date();
     selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
     const syncChannel = "BroadcastChannel" in window ? new BroadcastChannel("123-budgeting-sync") : null;
@@ -1068,9 +1069,10 @@
         if (removed.type === "cardPayment") {
           const paymentAccount = normalizeAccountKey(removed.bank);
           balances[paymentAccount] += removed.amount;
-          creditCard.owed += removed.amount;
+          const paidCard = extraCreditCards.find(card => card.id === removed.cardId);
+          if (paidCard) paidCard.balance = Number(paidCard.balance || 0) + Number(removed.amount);
           localStorage.setItem("flowly-balances", JSON.stringify(balances));
-          localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+          localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
           renderBalances();
           renderCreditCard();
         }
@@ -1206,7 +1208,7 @@
         </details>`).join("") || '<div class="card empty-state">No investment accounts yet. Add one in Settings.</div>';
       document.getElementById("extraCreditCards").innerHTML = extraCreditCards.map(card => `
         <details><summary><span class="bank-mark chase">CC</span><span><span class="bank-name">${escapeHtml(card.name)}</span><span class="bank-type">Credit card ••${escapeHtml(card.lastFour)}</span></span><span class="bank-balance">${money(card.balance)}<i class="chevron">⌄</i></span></summary>
-          <div class="detail-body"><div class="detail-row"><span>Amount owed</span><strong>${money(card.balance)}</strong></div><div class="detail-row"><span>Monthly due day</span><strong>${card.dueDay}</strong></div><p style="margin:0;color:var(--muted);font-size:12px">Manage this card in Settings.</p></div>
+          <div class="detail-body"><div class="detail-row"><span>Amount owed</span><strong>${money(card.balance)}</strong></div><div class="detail-row"><span>Monthly due day</span><strong>${card.dueDay}</strong></div><button class="mini-action" data-pay-card="${card.id}" type="button">${Number(card.balance) > 0 ? "Pay this card" : "Card paid"}</button></div>
         </details>`).join("") || '<div class="card empty-state">No credit cards yet. Add one in Settings.</div>';
       document.getElementById("extraCashSettings").innerHTML = extraCashAccounts.map(account => `
         <div class="added-account-row" data-cash-settings="${account.id}">
@@ -1230,6 +1232,17 @@
           <button class="remove-account" type="button" data-remove-credit-card="${card.id}">Remove card</button>
         </div>`).join("") || '<p class="empty-state">No additional credit cards yet.</p>';
       document.querySelectorAll("[data-extra-transfer]").forEach(button => button.onclick = () => document.getElementById("transferModal").classList.add("open"));
+      document.querySelectorAll("[data-pay-card]").forEach(button => button.onclick = () => {
+        const card = extraCreditCards.find(item => item.id === button.dataset.payCard);
+        if (!card || Number(card.balance) <= 0) return showToast("This card is already paid");
+        selectedPaymentCardId = card.id;
+        document.getElementById("cardPaymentTitle").textContent = `Pay ${card.name}`;
+        document.getElementById("paymentAmountOwed").textContent = money(card.balance);
+        document.getElementById("cardPaymentAmount").max = card.balance;
+        document.getElementById("cardPaymentAmount").value = Number(card.balance).toFixed(2);
+        document.getElementById("cardPaymentDate").value = new Date().toISOString().slice(0, 10);
+        document.getElementById("cardPaymentModal").classList.add("open");
+      });
       document.querySelectorAll("[data-remove-cash]").forEach(button => button.onclick = () => {
         const id = button.dataset.removeCash;
         extraCashAccounts = extraCashAccounts.filter(account => account.id !== id);
@@ -1362,8 +1375,9 @@
     function renderCreditCard() {
       if (document.getElementById("creditOwed")) document.getElementById("creditOwed").textContent = money(creditCard.owed);
       if (document.getElementById("creditOwedDetail")) document.getElementById("creditOwedDetail").textContent = money(creditCard.owed);
-      document.getElementById("paymentAmountOwed").textContent = money(creditCard.owed);
-      document.getElementById("cardPaymentAmount").max = creditCard.owed || "";
+      const selectedCard = extraCreditCards.find(card => card.id === selectedPaymentCardId);
+      document.getElementById("paymentAmountOwed").textContent = money(selectedCard?.balance || 0);
+      document.getElementById("cardPaymentAmount").max = selectedCard?.balance || "";
       if (document.getElementById("creditLastPaid")) document.getElementById("creditLastPaid").textContent = creditCard.lastPaid ? prettyDate(creditCard.lastPaid) : "Not paid yet";
       if (document.getElementById("creditDueDayDetail")) document.getElementById("creditDueDayDetail").textContent = creditCard.dueDay;
     }
@@ -1635,7 +1649,16 @@
       }
       document.getElementById(btn.dataset.open + "Modal").classList.add("open");
     }));
-    document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal").classList.remove("open")));
+    document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => {
+      const modal = btn.closest(".modal");
+      modal.classList.remove("open");
+      if (modal.id === "cardPaymentModal") {
+        selectedPaymentCardId = null;
+        document.getElementById("cardPaymentForm").reset();
+        document.getElementById("cardPaymentTitle").textContent = "Pay credit card";
+        document.getElementById("paymentAmountOwed").textContent = "$0.00";
+      }
+    }));
     document.querySelectorAll(".modal").forEach(modal => modal.addEventListener("click", event => {
       if (event.target === modal) modal.classList.remove("open");
     }));
@@ -1811,23 +1834,25 @@
       const amount = Number(document.getElementById("cardPaymentAmount").value);
       const bank = document.getElementById("cardPaymentBank").value;
       const date = document.getElementById("cardPaymentDate").value;
-      if (!creditCard.owed) return showToast("Your credit card balance is already paid");
-      if (amount > creditCard.owed) return showToast("Payment cannot exceed the amount owed");
+      const card = extraCreditCards.find(item => item.id === selectedPaymentCardId);
+      if (!card || !Number(card.balance)) return showToast("This credit card is already paid");
+      if (amount > Number(card.balance)) return showToast("Payment cannot exceed the amount owed");
       if (amount > balances[bank]) return showToast(`Not enough money in ${accountLabel(bank)}`);
       balances[bank] -= amount;
-      creditCard.owed -= amount;
-      creditCard.lastPaid = date;
+      card.balance = Math.max(0, Number(card.balance) - amount);
+      card.lastPaid = date;
       transactions.unshift({
-        merchant: `${bankNames.chase} Credit Card Payment`,
+        merchant: `${card.name} Payment`,
         amount,
         category: "Bills",
         method: `${accountLabel(bank)} debit`,
         type: "cardPayment",
         bank,
+        cardId: card.id,
         date
       });
       localStorage.setItem("flowly-balances", JSON.stringify(balances));
-      localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+      localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
       localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
       renderBalances();
       renderCreditCard();
@@ -1835,6 +1860,9 @@
       renderCalendar();
       renderSummary();
       event.target.reset();
+      selectedPaymentCardId = null;
+      document.getElementById("cardPaymentTitle").textContent = "Pay credit card";
+      document.getElementById("paymentAmountOwed").textContent = "$0.00";
       document.getElementById("cardPaymentDate").value = todayValue;
       document.getElementById("cardPaymentModal").classList.remove("open");
       showToast(`${money(amount)} card payment added to expenses`);
