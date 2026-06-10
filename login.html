@@ -123,6 +123,12 @@
       .auth-panel { padding: 34px 24px 50px; }
       h2 { font-size: 29px; }
     }
+    .signup-accounts { display:grid; gap:10px; margin:18px 0; }
+    .signup-account { display:grid; grid-template-columns:1.4fr 1fr 1fr auto; gap:8px; align-items:end; padding:12px; border:1px solid var(--line); border-radius:14px; background:#f9faf8; }
+    .signup-account label { margin:0; }
+    .signup-account button { border:0; border-radius:10px; padding:12px; background:#fff0eb; color:#a63f2b; font-weight:800; cursor:pointer; }
+    .secondary { width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; background:white; color:var(--green); font-weight:800; cursor:pointer; }
+    @media (max-width: 600px) { .signup-account { grid-template-columns:1fr 1fr; } .signup-account button { grid-column:1 / -1; } }
   </style>
 </head>
 <body>
@@ -180,13 +186,15 @@
 
       <div class="auth-view" id="profileView">
         <p class="eyebrow">One last step</p>
-        <h2>What should we call you?</h2>
-        <p class="sub">Your full name will appear in your greeting and Settings page.</p>
+        <h2>Set up your budget.</h2>
+        <p class="sub">Add your name and any accounts you want ready on day one. You can add or remove more later.</p>
         <form id="profileForm">
           <p class="error" id="profileError"></p>
           <label>Full name
             <input id="fullName" type="text" autocomplete="name" placeholder="First and last name" required>
           </label>
+          <div class="signup-accounts" id="signupAccounts"></div>
+          <button class="secondary" id="addSignupAccount" type="button">+ Add bank or credit card</button>
           <button class="primary" type="submit">Open my budget</button>
         </form>
       </div>
@@ -201,6 +209,21 @@
       window.SUPABASE_CONFIG.publishableKey
     );
     let pendingSignup = null;
+
+    function addSignupAccount(values = {}) {
+      const row = document.createElement("div");
+      row.className = "signup-account";
+      row.innerHTML = `
+        <label>Account name<input data-signup-name type="text" placeholder="e.g. Capital One" value="${values.name || ""}" required></label>
+        <label>Type<select data-signup-type><option>Checking</option><option>Savings</option><option>Cash</option><option>Credit card</option></select></label>
+        <label>Balance<input data-signup-balance type="number" min="0" step="0.01" value="${values.balance || 0}" required></label>
+        <button type="button" aria-label="Remove account">Remove</button>`;
+      row.querySelector("select").value = values.type || "Checking";
+      row.querySelector("button").addEventListener("click", () => row.remove());
+      document.getElementById("signupAccounts").appendChild(row);
+    }
+
+    document.getElementById("addSignupAccount").addEventListener("click", () => addSignupAccount());
 
     function showView(id) {
       document.querySelectorAll(".auth-view").forEach(view => view.classList.toggle("active", view.id === id));
@@ -229,6 +252,7 @@
       const confirm = document.getElementById("signupConfirm").value;
       if (password !== confirm) return showError("signupError", "The passwords do not match.");
       pendingSignup = { email, password };
+      if (!document.querySelector(".signup-account")) addSignupAccount();
       showView("profileView");
       document.getElementById("fullName").focus();
     });
@@ -245,6 +269,24 @@
       });
       if (error) return showError("profileError", error.message);
       localStorage.setItem("flowly-profile", JSON.stringify({ name, email: pendingSignup.email }));
+      const cashAccounts = [];
+      const creditCards = [];
+      const signupBalances = {};
+      document.querySelectorAll(".signup-account").forEach((row, index) => {
+        const accountName = row.querySelector("[data-signup-name]").value.trim();
+        const type = row.querySelector("[data-signup-type]").value;
+        const balance = Number(row.querySelector("[data-signup-balance]").value || 0);
+        const id = `signup-${Date.now()}-${index}`;
+        if (type === "Credit card") creditCards.push({ id, name: accountName, lastFour: "0000", dueDay: 1, balance });
+        else {
+          cashAccounts.push({ id, name: accountName, type, apy: 0 });
+          signupBalances[id] = balance;
+        }
+      });
+      localStorage.setItem("flowly-extra-cash-accounts", JSON.stringify(cashAccounts));
+      localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(creditCards));
+      localStorage.setItem("flowly-balances", JSON.stringify(signupBalances));
+      localStorage.setItem("flowly-dynamic-accounts", "true");
       if (data.session) {
         sessionStorage.setItem("flowly-authenticated", "true");
         openApp();

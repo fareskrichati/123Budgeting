@@ -29,7 +29,7 @@
       background:
         radial-gradient(circle at 20% 0%, rgba(201, 242, 123, .18), transparent 25rem),
         var(--paper);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Segoe UI Variable", "Aptos", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -84,8 +84,8 @@
       text-transform: uppercase;
       letter-spacing: 1.2px;
     }
-    h1 { margin: 0; font-size: 31px; line-height: 1.06; letter-spacing: -1.4px; }
-    h2 { margin: 0; font-size: 18px; letter-spacing: -.45px; }
+    h1 { margin: 0; font-size: 32px; line-height: 1.08; letter-spacing: -1px; font-weight: 750; }
+    h2 { margin: 0; font-size: 18px; letter-spacing: -.25px; font-weight: 750; }
     p { line-height: 1.5; }
     .sub { margin: 8px 0 22px; color: var(--muted); font-size: 14px; }
 
@@ -140,7 +140,9 @@
       background: white; font-weight: 800; font-size: 14px; line-height: 1.25;
     }
     .legend { flex: 1; display: grid; gap: 11px; }
-    .legend-row { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+    .legend-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+    .legend-row > span { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    .legend-row i { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
     .dot { width: 9px; height: 9px; border-radius: 50%; }
     .legend-row span:nth-child(2) { color: var(--muted); }
     .legend-row strong { font-size: 12px; }
@@ -148,7 +150,7 @@
     .transaction-list { display: grid; gap: 10px; }
     .transaction {
       display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center;
-      background: white; border-radius: 18px; padding: 12px;
+      background: white; border-radius: 18px; padding: 12px; border-left: 5px solid var(--category-color, var(--line));
     }
     .tx-icon {
       width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
@@ -162,6 +164,10 @@
       width: 31px; height: 31px; border: 0; border-radius: 10px; cursor: pointer;
       color: #a63f2b; background: #fff0eb; font-size: 17px;
     }
+    .edit-expense { border:0; border-radius:10px; padding:7px 10px; background:#edf5ee; color:var(--green); font-weight:800; cursor:pointer; }
+    .expense-filters { display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin:16px 0; padding:14px; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.75); }
+    .expense-filters input, .expense-filters select { margin-top:5px; padding:11px 12px; background:white; }
+    .filter-count { grid-column:1 / -1; margin:0; color:var(--muted); font-size:12px; }
 
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .quick {
@@ -264,6 +270,12 @@
     .added-account-list { display: grid; gap: 10px; }
     .added-account-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px; border-radius: 14px; background: white; border: 1px solid var(--line); }
     .added-account-row .remove-account { grid-column: 1 / -1; border: 0; border-radius: 11px; padding: 10px; background: #fff0eb; color: #a63f2b; font-weight: 800; cursor: pointer; }
+    .settings-panel { margin:0; border:1px solid var(--line); box-shadow:none; background:#f9faf8; }
+    .settings-panel > summary { grid-template-columns:1fr auto; padding:16px; }
+    .settings-panel > summary strong { font-size:14px; }
+    .settings-panel > summary small { display:block; margin-top:4px; color:var(--muted); font-size:11px; }
+    .settings-panel-content { display:grid; gap:14px; padding:0 16px 16px; border-top:1px solid var(--line); }
+    .settings-panel-content > :first-child { margin-top:16px; }
     .sync-status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
     .sync-status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(27,105,79,.12); }
     .countdown-card { display: grid; gap: 11px; }
@@ -564,7 +576,7 @@
         <div class="donut-wrap">
           <div class="donut" id="spendingDonut" data-label="$0.00&#10;spent"></div>
           <div class="legend">
-            <div class="empty-state" id="categorySummary">Add expenses to see your spending breakdown.</div>
+            <div id="categorySummary">Add expenses to see your spending breakdown.</div>
           </div>
         </div>
       </div>
@@ -625,76 +637,12 @@
       </div>
 
       <div class="section-head"><h2>Cash accounts</h2><button data-open="transfer">Transfer</button></div>
-      <details open>
-        <summary>
-          <span class="bank-mark chase" data-bank-mark="chase">CHASE</span>
-          <span><span class="bank-name" data-bank-name="chase">Chase</span><span class="bank-type">Checking + savings</span></span>
-          <span class="bank-balance"><span data-bank-total="chase">$0.00</span><i class="chevron">⌄</i></span>
-        </summary>
-        <div class="detail-body">
-          <div class="detail-row"><span>Checking ••4821</span><strong data-balance="chaseChecking">$0.00</strong></div>
-          <div class="detail-row"><span>Savings</span><strong data-balance="chaseSavings">$0.00</strong></div>
-          <div class="detail-row"><span>Savings APY</span><strong data-apy="chase">0.00%</strong></div>
-          <button class="mini-action" data-open="transfer">Move money</button>
-        </div>
-      </details>
-      <details>
-        <summary>
-          <span class="bank-mark sofi" data-bank-mark="sofi">SOFI</span>
-          <span><span class="bank-name" data-bank-name="sofi">Sofi</span><span class="bank-type">Checking + savings</span></span>
-          <span class="bank-balance"><span data-bank-total="sofi">$0.00</span><i class="chevron">⌄</i></span>
-        </summary>
-        <div class="detail-body">
-          <div class="detail-row"><span>Checking</span><strong data-balance="sofiChecking">$0.00</strong></div>
-          <div class="detail-row"><span>Savings ••1903</span><strong data-balance="sofiSavings">$0.00</strong></div>
-          <div class="detail-row"><span>Savings APY</span><strong data-apy="sofi">0.00%</strong></div>
-          <button class="mini-action" data-open="transfer">Move money</button>
-        </div>
-      </details>
-      <details>
-        <summary>
-          <span class="bank-mark mission" data-bank-mark="mission">M</span>
-          <span><span class="bank-name" data-bank-name="mission">Mission</span><span class="bank-type">Checking + savings</span></span>
-          <span class="bank-balance"><span data-bank-total="mission">$0.00</span><i class="chevron">⌄</i></span>
-        </summary>
-        <div class="detail-body">
-          <div class="detail-row"><span>Checking ••7710</span><strong data-balance="missionChecking">$0.00</strong></div>
-          <div class="detail-row"><span>Savings</span><strong data-balance="missionSavings">$0.00</strong></div>
-          <div class="detail-row"><span>Savings APY</span><strong data-apy="mission">0.00%</strong></div>
-          <button class="mini-action" data-open="transfer">Move money</button>
-        </div>
-      </details>
       <div id="extraCashAccounts"></div>
 
       <div class="section-head"><h2>Credit cards</h2></div>
-      <details open>
-        <summary>
-          <span class="bank-mark chase">CC</span>
-          <span><span class="bank-name"><span data-bank-name="chase">Chase</span> Credit Card</span><span class="bank-type">Credit card ••1534</span></span>
-          <span class="bank-balance"><span id="creditOwed">$0.00</span><i class="chevron">⌄</i></span>
-        </summary>
-        <div class="detail-body">
-          <div class="detail-row"><span>Amount owed this month</span><strong id="creditOwedDetail">$0.00</strong></div>
-          <div class="detail-row"><span>Monthly due day</span><strong id="creditDueDayDetail">1</strong></div>
-          <div class="detail-row"><span>Last payment</span><strong id="creditLastPaid">Not paid yet</strong></div>
-          <button class="mini-action" data-open="cardPayment">Pay credit card</button>
-        </div>
-      </details>
       <div id="extraCreditCards"></div>
 
       <div class="section-head"><h2>Investments</h2></div>
-      <details>
-        <summary>
-          <span class="bank-mark robinhood">RH</span>
-          <span><span class="bank-name">Robinhood</span><span class="bank-type">Individual brokerage</span></span>
-          <span class="bank-balance">$0.00<i class="chevron">⌄</i></span>
-        </summary>
-        <div class="detail-body">
-          <div class="detail-row"><span>Stocks & ETFs</span><strong>$0.00</strong></div>
-          <div class="detail-row"><span>Buying power</span><strong>$0.00</strong></div>
-          <div class="detail-row"><span>Today's return</span><strong style="color:var(--green)">$0.00</strong></div>
-        </div>
-      </details>
       <div id="extraInvestmentAccounts"></div>
 
       <div class="section-head"><h2>Recent deposits</h2></div>
@@ -706,6 +654,12 @@
       <h1>Every dollar, clear.</h1>
       <p class="sub">Review purchases by account, card, and category.</p>
       <button class="primary" data-open="expense">＋ Add a new expense</button>
+      <div class="expense-filters">
+        <label>Search expenses<input id="expenseSearch" type="search" placeholder="Merchant or category"></label>
+        <label>Category<select id="expenseCategoryFilter"></select></label>
+        <label>Account<select id="expenseAccountFilter"></select></label>
+        <p class="filter-count" id="expenseFilterCount"></p>
+      </div>
       <div class="section-head"><h2>Recurring payments</h2></div>
       <div class="transaction-list" id="recurringList"></div>
       <div class="section-head">
@@ -721,58 +675,33 @@
       <h1>Settings.</h1>
       <p class="sub">Change your profile and account details.</p>
       <form class="card form-card" id="settingsForm">
-        <label>Your name
-          <input id="settingsName" type="text" required>
-        </label>
-        <div class="settings-bank">
-          <h2 style="margin-bottom:14px">Login details</h2>
-          <label>Email address
-            <input id="settingsEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
-          </label>
-          <label>New password
-            <input id="settingsPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
-          </label>
-          <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Profile, email, and password changes are handled securely by Supabase Auth.</p>
-        </div>
-        <div class="settings-bank">
-          <h2 style="margin-bottom:10px">Data sync</h2>
-          <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Automatic browser sync is on for other open tabs and windows. Cloud and cross-device sync will become available when Supabase is connected.</p>
-          <p class="sync-status" id="syncStatus">Waiting for first sync</p>
-          <button class="primary" id="syncNowButton" type="button" style="margin-top:12px">Sync now</button>
-        </div>
-        <div class="settings-bank">
-          <h2 style="margin-bottom:10px">Payday countdown</h2>
-          <div class="form-row">
+        <details class="settings-panel" open><summary><span><strong>Profile and login</strong><small>Name, email, and password</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content">
+          <label>Your name<input id="settingsName" type="text" required></label>
+          <label>Email address<input id="settingsEmail" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+          <label>New password<input id="settingsPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+        </div></details>
+        <details class="settings-panel"><summary><span><strong>Payday</strong><small>Countdown and pay frequency</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content"><div class="form-row">
             <label>Next payday<input id="settingsPaydayDate" type="date"></label>
             <label>Pay frequency
               <select id="settingsPaydayFrequency"><option value="7">Weekly</option><option value="14">Every 2 weeks</option><option value="15">Twice monthly</option><option value="30">Monthly</option></select>
             </label>
-          </div>
-        </div>
-        <div class="settings-launchers">
-          <button class="settings-launcher" data-open="bank1Settings" type="button"><strong>Bank 1</strong><small data-bank-name="chase">Chase</small></button>
-          <button class="settings-launcher" data-open="bank2Settings" type="button"><strong>Bank 2</strong><small data-bank-name="sofi">Sofi</small></button>
-          <button class="settings-launcher" data-open="bank3Settings" type="button"><strong>Bank 3</strong><small data-bank-name="mission">Mission</small></button>
-          <button class="settings-launcher" data-open="primaryCardSettings" type="button"><strong>Credit card</strong><small>Edit monthly due day</small></button>
-        </div>
-        <div class="account-builder">
-          <h2>Additional cash accounts</h2>
-          <p style="margin:0;color:var(--muted);font-size:12px">Add another checking, savings, or cash account.</p>
+          </div></div></details>
+        <details class="settings-panel"><summary><span><strong>Bank and cash accounts</strong><small>Add, edit, or remove accounts</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content">
           <div class="added-account-list" id="extraCashSettings"></div>
           <button class="primary" data-open="cashAccount" type="button">Add cash account</button>
-        </div>
-        <div class="account-builder">
-          <h2>Investment accounts</h2>
-          <p style="margin:0;color:var(--muted);font-size:12px">Track brokerage, retirement, crypto, and other investments.</p>
+        </div></details>
+        <details class="settings-panel"><summary><span><strong>Investments</strong><small>Brokerage, retirement, and crypto</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content">
           <div class="added-account-list" id="investmentSettings"></div>
           <button class="primary" data-open="investmentAccount" type="button">Add investment account</button>
-        </div>
-        <div class="account-builder">
-          <h2>Credit cards</h2>
-          <p style="margin:0;color:var(--muted);font-size:12px">Add cards and set their monthly due days.</p>
+        </div></details>
+        <details class="settings-panel"><summary><span><strong>Credit cards</strong><small>Balances and monthly due dates</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content">
           <div class="added-account-list" id="creditCardSettings"></div>
           <button class="primary" data-open="creditCardAccount" type="button">Add credit card</button>
-        </div>
+        </div></details>
+        <details class="settings-panel"><summary><span><strong>Data sync</strong><small>Browser and cloud synchronization</small></span><i class="chevron">⌄</i></summary><div class="settings-panel-content">
+          <p class="sync-status" id="syncStatus">Waiting for first sync</p>
+          <button class="primary" id="syncNowButton" type="button">Sync now</button>
+        </div></details>
         <button class="primary" type="submit">Save settings</button>
         <button class="primary" id="logoutButton" type="button" style="background:#fff0eb;color:#a63f2b">Log out</button>
       </form>
@@ -990,6 +919,38 @@
     let investmentAccounts = JSON.parse(localStorage.getItem("flowly-investment-accounts")) || [];
     let extraCreditCards = JSON.parse(localStorage.getItem("flowly-extra-credit-cards")) || [];
     let paydaySettings = JSON.parse(localStorage.getItem("flowly-payday-settings")) || { nextDate: "", frequency: 14 };
+    if (!localStorage.getItem("flowly-dynamic-accounts")) {
+      [
+        ["chaseChecking", bankNames.chase, "Checking", 0],
+        ["chaseSavings", bankNames.chase, "Savings", bankApys.chase],
+        ["sofiChecking", bankNames.sofi, "Checking", 0],
+        ["sofiSavings", bankNames.sofi, "Savings", bankApys.sofi],
+        ["missionChecking", bankNames.mission, "Checking", 0],
+        ["missionSavings", bankNames.mission, "Savings", bankApys.mission]
+      ].forEach(([id, name, type, apy]) => {
+        if (!extraCashAccounts.some(account => account.id === id)) extraCashAccounts.push({ id, name, type, apy });
+      });
+      if (!extraCreditCards.some(card => card.id === "primaryCredit")) {
+        extraCreditCards.unshift({ id: "primaryCredit", name: `${bankNames.chase} Credit Card`, lastFour: "1534", dueDay: creditCard.dueDay, balance: creditCard.owed, lastPaid: creditCard.lastPaid });
+      }
+      creditCard = { owed: 0, lastPaid: null, dueDay: 1 };
+      localStorage.setItem("flowly-dynamic-accounts", "true");
+      localStorage.setItem("flowly-extra-cash-accounts", JSON.stringify(extraCashAccounts));
+      localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
+      localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
+    }
+    Object.entries(balances).forEach(([id, balance]) => {
+      if (extraCashAccounts.some(account => account.id === id) || Number(balance) === 0) return;
+      const type = /saving/i.test(id) ? "Savings" : "Checking";
+      const fallbackName = id.replace(/Checking|Savings/gi, "").replace(/[-_]/g, " ").trim() || "Recovered account";
+      extraCashAccounts.push({
+        id,
+        name: fallbackName.replace(/\b\w/g, letter => letter.toUpperCase()),
+        type,
+        apy: 0
+      });
+    });
+    localStorage.setItem("flowly-extra-cash-accounts", JSON.stringify(extraCashAccounts));
     extraCashAccounts.forEach(account => {
       if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
     });
@@ -1010,26 +971,35 @@
       "Food & dining": "⌁", Housing: "⌂", Shopping: "◇", Transportation: "↗",
       Bills: "▤", Entertainment: "▷", Other: "•"
     };
+    const categoryColors = {
+      "Food & dining": "#2f855a",
+      Housing: "#4c6ef5",
+      Shopping: "#d97706",
+      Transportation: "#0891b2",
+      Bills: "#dc4c64",
+      Entertainment: "#7c3aed",
+      Other: "#64748b"
+    };
+    let expenseFilters = { search: "", category: "all", account: "all" };
 
     const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
     const prettyDate = value => new Date(value + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    const normalizeAccountKey = key => ({ chase: "chaseChecking", sofi: "sofiChecking", mission: "missionChecking" }[key] || key);
-    const baseAccountKeys = ["chaseChecking", "chaseSavings", "sofiChecking", "sofiSavings", "missionChecking", "missionSavings"];
-    const baseCheckingAccountKeys = ["chaseChecking", "sofiChecking", "missionChecking"];
+    const normalizeAccountKey = key => key;
+    const baseAccountKeys = [];
+    const baseCheckingAccountKeys = [];
     const findExtraCash = key => extraCashAccounts.find(account => account.id === normalizeAccountKey(key));
     const accountBank = key => findExtraCash(key)?.id || normalizeAccountKey(key).replace(/Checking|Savings/, "");
     const accountType = key => findExtraCash(key)?.type.toLowerCase() || (normalizeAccountKey(key).endsWith("Savings") ? "savings" : "checking");
     const accountLabel = key => {
       const extra = findExtraCash(key);
-      return extra ? `${extra.name} ${extra.type.toLowerCase()}` : `${bankNames[accountBank(key)]} ${accountType(key)}`;
+      return extra ? `${extra.name} ${extra.type.toLowerCase()}` : "Unknown account";
     };
     const allAccountKeys = () => [...baseAccountKeys, ...extraCashAccounts.map(account => account.id)];
     const checkingAccountKeys = () => [...baseCheckingAccountKeys, ...extraCashAccounts.map(account => account.id)];
     const debitPaymentOptions = () => checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
-    const creditPaymentOptions = () => [
-      `<option value="primaryCredit">${escapeHtml(bankNames.chase)} Credit Card ••1534</option>`,
-      ...extraCreditCards.map(card => `<option value="${card.id}">${escapeHtml(card.name)} ••${escapeHtml(card.lastFour)}</option>`)
-    ].join("");
+    const creditPaymentOptions = () => extraCreditCards
+      .map(card => `<option value="${card.id}">${escapeHtml(card.name)} ••${escapeHtml(card.lastFour)}</option>`)
+      .join("");
     const monthKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const selectedMonthKey = () => monthKey(selectedMonth);
     const monthName = () => selectedMonth.toLocaleDateString("en-US", { month: "long" });
@@ -1037,35 +1007,52 @@
     const selectedMonthTransactions = () => transactions.map((tx, index) => ({ tx, index })).filter(item => item.tx.date.startsWith(selectedMonthKey()));
     const selectedMonthPaychecks = () => paychecks.filter(check => check.date.startsWith(selectedMonthKey()));
 
+    let editingTransactionIndex = null;
+    function reverseExpenseImpact(tx) {
+      if (tx.paymentType === "Credit") {
+        const card = extraCreditCards.find(item => item.id === tx.creditCardId);
+        if (card) card.balance = Math.max(0, Number(card.balance) - Number(tx.amount));
+      } else if (tx.balanceApplied && tx.type !== "cardPayment" && tx.method in balances) {
+        balances[tx.method] = Number(balances[tx.method] || 0) + Number(tx.amount);
+      }
+    }
+    function applyExpenseImpact(tx) {
+      if (tx.paymentType === "Credit") {
+        const card = extraCreditCards.find(item => item.id === tx.creditCardId);
+        if (card) card.balance = Number(card.balance || 0) + Number(tx.amount);
+      } else if (tx.method in balances) {
+        balances[tx.method] = Number(balances[tx.method] || 0) - Number(tx.amount);
+      }
+    }
+
     function renderTransactions() {
       const monthlyTransactions = selectedMonthTransactions();
-      const html = monthlyTransactions.map(({ tx, index }) => `
-        <div class="transaction">
-          <div class="tx-icon">${icons[tx.category] || "•"}</div>
+      const filteredTransactions = monthlyTransactions.filter(({ tx }) => {
+        const query = expenseFilters.search.toLowerCase();
+        const account = tx.paymentType === "Credit" ? tx.creditCardId : tx.method;
+        return (!query || `${tx.merchant} ${tx.category} ${tx.method}`.toLowerCase().includes(query))
+          && (expenseFilters.category === "all" || tx.category === expenseFilters.category)
+          && (expenseFilters.account === "all" || account === expenseFilters.account);
+      });
+      const html = filteredTransactions.map(({ tx, index }) => `
+        <div class="transaction" style="--category-color:${categoryColors[tx.category] || categoryColors.Other}">
+          <div class="tx-icon" style="background:${categoryColors[tx.category] || categoryColors.Other}18;color:${categoryColors[tx.category] || categoryColors.Other}">${icons[tx.category] || "•"}</div>
           <div><div class="tx-name">${escapeHtml(tx.merchant)}</div><div class="tx-meta">${tx.category} · ${tx.method} · ${prettyDate(tx.date)}</div></div>
-          <div class="tx-actions"><div class="tx-amount">-${money(tx.amount)}</div><button class="delete-expense" data-delete-expense="${index}" aria-label="Delete ${escapeHtml(tx.merchant)}">×</button></div>
+          <div class="tx-actions"><div class="tx-amount">-${money(tx.amount)}</div>${tx.type === "cardPayment" ? "" : `<button class="edit-expense" data-edit-expense="${index}" type="button">Edit</button>`}<button class="delete-expense" data-delete-expense="${index}" aria-label="Delete ${escapeHtml(tx.merchant)}">×</button></div>
         </div>`).join("");
       document.getElementById("allTransactions").innerHTML = html || '<div class="card empty-state">No expenses added yet.</div>';
       document.getElementById("recentTransactions").innerHTML = monthlyTransactions.slice(0, 3).map(({ tx }) => `
-        <div class="transaction">
-          <div class="tx-icon">${icons[tx.category] || "•"}</div>
+        <div class="transaction" style="--category-color:${categoryColors[tx.category] || categoryColors.Other}">
+          <div class="tx-icon" style="background:${categoryColors[tx.category] || categoryColors.Other}18;color:${categoryColors[tx.category] || categoryColors.Other}">${icons[tx.category] || "•"}</div>
           <div><div class="tx-name">${escapeHtml(tx.merchant)}</div><div class="tx-meta">${tx.method} · ${prettyDate(tx.date)}</div></div>
           <div class="tx-amount">-${money(tx.amount)}</div>
         </div>`).join("") || '<div class="card empty-state">No recent spending.</div>';
+      document.getElementById("expenseFilterCount").textContent = `${filteredTransactions.length} of ${monthlyTransactions.length} expenses shown`;
       document.querySelectorAll("[data-delete-expense]").forEach(button => button.addEventListener("click", () => {
         const index = Number(button.dataset.deleteExpense);
         if (!confirm(`Delete ${transactions[index].merchant} for ${money(transactions[index].amount)}?`)) return;
         const removed = transactions[index];
-        if (removed.paymentType === "Credit") {
-          const card = extraCreditCards.find(item => item.id === removed.creditCardId);
-          if (card) card.balance = Math.max(0, card.balance - removed.amount);
-          else creditCard.owed = Math.max(0, creditCard.owed - removed.amount);
-          localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
-          localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
-          renderCreditCard();
-          renderBalances();
-          renderHomePlanning();
-        }
+        reverseExpenseImpact(removed);
         if (removed.type === "cardPayment") {
           const paymentAccount = normalizeAccountKey(removed.bank);
           balances[paymentAccount] += removed.amount;
@@ -1076,11 +1063,26 @@
           renderCreditCard();
         }
         transactions.splice(index, 1);
+        persistAddedAccounts();
         localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
         renderTransactions();
         renderCalendar();
         renderSummary();
         showToast("Expense deleted");
+      }));
+      document.querySelectorAll("[data-edit-expense]").forEach(button => button.addEventListener("click", () => {
+        const tx = transactions[Number(button.dataset.editExpense)];
+        editingTransactionIndex = Number(button.dataset.editExpense);
+        document.getElementById("expenseTitle").textContent = "Edit expense";
+        document.getElementById("merchant").value = tx.merchant;
+        document.getElementById("amount").value = tx.amount;
+        document.getElementById("category").value = tx.category;
+        document.getElementById("expenseDate").value = tx.date;
+        selectedMethod = tx.paymentType || "Debit";
+        document.querySelectorAll("[data-method]").forEach(item => item.classList.toggle("active", item.dataset.method === selectedMethod));
+        document.getElementById("paymentAccount").innerHTML = selectedMethod === "Credit" ? creditPaymentOptions() : debitPaymentOptions();
+        document.getElementById("paymentAccount").value = selectedMethod === "Credit" ? tx.creditCardId : tx.method;
+        document.getElementById("expenseModal").classList.add("open");
       }));
     }
 
@@ -1180,7 +1182,7 @@
             <div class="detail-row"><span>APY</span><strong>${Number(account.apy || 0).toFixed(2)}%</strong></div>
             <button class="mini-action" data-extra-transfer type="button">Move money</button>
           </div>
-        </details>`).join("");
+        </details>`).join("") || '<div class="card empty-state">No cash accounts yet. Add one in Settings.</div>';
       document.getElementById("extraInvestmentAccounts").innerHTML = investmentAccounts.map(account => `
         <details>
           <summary>
@@ -1189,11 +1191,11 @@
             <span class="bank-balance">${money(account.balance)}<i class="chevron">⌄</i></span>
           </summary>
           <div class="detail-body"><div class="detail-row"><span>Current value</span><strong>${money(account.balance)}</strong></div></div>
-        </details>`).join("");
+        </details>`).join("") || '<div class="card empty-state">No investment accounts yet. Add one in Settings.</div>';
       document.getElementById("extraCreditCards").innerHTML = extraCreditCards.map(card => `
         <details><summary><span class="bank-mark chase">CC</span><span><span class="bank-name">${escapeHtml(card.name)}</span><span class="bank-type">Credit card ••${escapeHtml(card.lastFour)}</span></span><span class="bank-balance">${money(card.balance)}<i class="chevron">⌄</i></span></summary>
           <div class="detail-body"><div class="detail-row"><span>Amount owed</span><strong>${money(card.balance)}</strong></div><div class="detail-row"><span>Monthly due day</span><strong>${card.dueDay}</strong></div><p style="margin:0;color:var(--muted);font-size:12px">Manage this card in Settings.</p></div>
-        </details>`).join("");
+        </details>`).join("") || '<div class="card empty-state">No credit cards yet. Add one in Settings.</div>';
       document.getElementById("extraCashSettings").innerHTML = extraCashAccounts.map(account => `
         <div class="added-account-row" data-cash-settings="${account.id}">
           <label>Name<input data-extra-name type="text" value="${escapeHtml(account.name)}" required></label>
@@ -1267,7 +1269,7 @@
         document.getElementById("paydayMessage").textContent = "Set your payday in Settings."; document.getElementById("paydayDays").textContent = "--";
         document.getElementById("paydayDate").textContent = "No payday configured"; document.getElementById("paydayProgress").style.width = "0";
       }
-      const cards = [{ name: `${bankNames.chase} Credit Card`, balance: creditCard.owed, dueDay: creditCard.dueDay }, ...extraCreditCards]
+      const cards = extraCreditCards
         .map(card => ({ ...card, dueDate: nextMonthlyDate(Number(card.dueDay || 1)) })).sort((a, b) => a.dueDate - b.dueDate);
       const today = new Date(); const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
       document.getElementById("homeCardDueDates").innerHTML = cards.map(card => {
@@ -1279,14 +1281,24 @@
 
     function renderSummary() {
       const spent = selectedMonthTransactions().reduce((sum, item) => sum + Number(item.tx.amount), 0);
+      const categoryTotals = {};
+      selectedMonthTransactions().forEach(({ tx }) => categoryTotals[tx.category] = (categoryTotals[tx.category] || 0) + Number(tx.amount));
+      let cursor = 0;
+      const segments = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).map(([category, total], index) => {
+        const start = cursor; cursor += total / spent * 100;
+        return `${categoryColors[category] || categoryColors.Other} ${start}% ${cursor}%`;
+      });
       const income = selectedMonthPaychecks().reduce((sum, check) => sum + Number(check.amount), 0);
       document.getElementById("monthlySpent").textContent = money(spent);
       document.getElementById("monthlyIncome").textContent = money(income);
       const percent = income ? Math.min(100, spent / income * 100) : 0;
       document.getElementById("spendingProgress").style.width = percent + "%";
       document.getElementById("spendingPace").textContent = income ? `You have spent ${Math.round(percent)}% of your added income.` : "Add income and expenses to see your monthly pace.";
-      document.getElementById("spendingDonut").style.background = spent ? "conic-gradient(var(--green) 0 100%)" : "#edf1ea";
+      document.getElementById("spendingDonut").style.background = spent ? `conic-gradient(${segments.join(",")})` : "#edf1ea";
       document.getElementById("spendingDonut").dataset.label = money(spent) + "\nspent";
+      document.getElementById("categorySummary").innerHTML = spent
+        ? Object.entries(categoryColors).map(([category, color]) => `<div class="legend-row"><span><i style="background:${color}"></i>${escapeHtml(category)}</span><strong>${categoryTotals[category] ? money(categoryTotals[category]) : "$0.00"}</strong></div>`).join("")
+        : Object.entries(categoryColors).map(([category, color]) => `<div class="legend-row"><span><i style="background:${color}"></i>${escapeHtml(category)}</span><strong>$0.00</strong></div>`).join("");
     }
 
     function renderSettings() {
@@ -1303,12 +1315,12 @@
       document.getElementById("settingsChaseName").value = bankNames.chase;
       document.getElementById("settingsSofiName").value = bankNames.sofi;
       document.getElementById("settingsMissionName").value = bankNames.mission;
-      document.getElementById("settingsChaseChecking").value = balances.chaseChecking.toFixed(2);
-      document.getElementById("settingsChaseSavings").value = balances.chaseSavings.toFixed(2);
-      document.getElementById("settingsSofiChecking").value = balances.sofiChecking.toFixed(2);
-      document.getElementById("settingsSofiSavings").value = balances.sofiSavings.toFixed(2);
-      document.getElementById("settingsMissionChecking").value = balances.missionChecking.toFixed(2);
-      document.getElementById("settingsMissionSavings").value = balances.missionSavings.toFixed(2);
+      document.getElementById("settingsChaseChecking").value = Number(balances.chaseChecking || 0).toFixed(2);
+      document.getElementById("settingsChaseSavings").value = Number(balances.chaseSavings || 0).toFixed(2);
+      document.getElementById("settingsSofiChecking").value = Number(balances.sofiChecking || 0).toFixed(2);
+      document.getElementById("settingsSofiSavings").value = Number(balances.sofiSavings || 0).toFixed(2);
+      document.getElementById("settingsMissionChecking").value = Number(balances.missionChecking || 0).toFixed(2);
+      document.getElementById("settingsMissionSavings").value = Number(balances.missionSavings || 0).toFixed(2);
       document.getElementById("settingsChaseApy").value = Number(bankApys.chase).toFixed(2);
       document.getElementById("settingsSofiApy").value = Number(bankApys.sofi).toFixed(2);
       document.getElementById("settingsMissionApy").value = Number(bankApys.mission).toFixed(2);
@@ -1321,22 +1333,27 @@
       if (selectedMethod !== "Credit") document.getElementById("paymentAccount").innerHTML = debitPaymentOptions();
       if (selectedMethod === "Credit") document.getElementById("paymentAccount").innerHTML = creditPaymentOptions();
       const accountOptions = allAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))}</option>`).join("");
+      document.getElementById("splitFields").innerHTML = allAccountKeys().map((key, index) => `<div class="split-row"><label>${escapeHtml(accountLabel(key))}</label><label>Percent<input class="split-percent" data-bank="${key}" type="number" min="0" max="100" value="${index === 0 ? 100 : 0}"></label></div><strong id="${index === 0 ? "splitTotal" : ""}">${index === 0 ? "100%" : ""}</strong>`).join("");
       document.getElementById("fromBank").innerHTML = accountOptions;
       document.getElementById("toBank").innerHTML = accountOptions;
       document.getElementById("paycheckBank").innerHTML = accountOptions;
-      document.getElementById("toBank").value = "chaseSavings";
+      if (allAccountKeys().length > 1) document.getElementById("toBank").selectedIndex = 1;
       document.getElementById("cardPaymentBank").innerHTML = checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
+      document.getElementById("expenseCategoryFilter").innerHTML = `<option value="all">All categories</option>${Object.keys(categoryColors).map(category => `<option value="${category}">${category}</option>`).join("")}`;
+      document.getElementById("expenseCategoryFilter").value = expenseFilters.category;
+      document.getElementById("expenseAccountFilter").innerHTML = `<option value="all">All accounts</option>${allAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))}</option>`).join("")}${extraCreditCards.map(card => `<option value="${card.id}">${escapeHtml(card.name)}</option>`).join("")}`;
+      document.getElementById("expenseAccountFilter").value = expenseFilters.account;
       renderAddedAccounts();
       document.getElementById("cardPaymentBank").innerHTML = checkingAccountKeys().map(key => `<option value="${key}">${escapeHtml(accountLabel(key))} debit</option>`).join("");
     }
 
     function renderCreditCard() {
-      document.getElementById("creditOwed").textContent = money(creditCard.owed);
-      document.getElementById("creditOwedDetail").textContent = money(creditCard.owed);
+      if (document.getElementById("creditOwed")) document.getElementById("creditOwed").textContent = money(creditCard.owed);
+      if (document.getElementById("creditOwedDetail")) document.getElementById("creditOwedDetail").textContent = money(creditCard.owed);
       document.getElementById("paymentAmountOwed").textContent = money(creditCard.owed);
       document.getElementById("cardPaymentAmount").max = creditCard.owed || "";
-      document.getElementById("creditLastPaid").textContent = creditCard.lastPaid ? prettyDate(creditCard.lastPaid) : "Not paid yet";
-      document.getElementById("creditDueDayDetail").textContent = creditCard.dueDay;
+      if (document.getElementById("creditLastPaid")) document.getElementById("creditLastPaid").textContent = creditCard.lastPaid ? prettyDate(creditCard.lastPaid) : "Not paid yet";
+      if (document.getElementById("creditDueDayDetail")) document.getElementById("creditDueDayDetail").textContent = creditCard.dueDay;
     }
 
     function renderRecurring() {
@@ -1415,6 +1432,12 @@
         : "Waiting for first sync";
     }
 
+    function showSyncError(message) {
+      const status = document.getElementById("syncStatus");
+      status.textContent = message;
+      status.style.color = "#a63f2b";
+    }
+
     function collectCloudData() {
       return Object.fromEntries(syncDataKeys.map(key => [key, localStorage.getItem(key)]));
     }
@@ -1439,6 +1462,13 @@
       investmentAccounts = JSON.parse(localStorage.getItem("flowly-investment-accounts")) || [];
       extraCreditCards = JSON.parse(localStorage.getItem("flowly-extra-credit-cards")) || [];
       paydaySettings = JSON.parse(localStorage.getItem("flowly-payday-settings")) || paydaySettings;
+      Object.entries(balances).forEach(([id, balance]) => {
+        if (extraCashAccounts.some(account => account.id === id) || Number(balance) === 0) return;
+        const type = /saving/i.test(id) ? "Savings" : "Checking";
+        const fallbackName = id.replace(/Checking|Savings/gi, "").replace(/[-_]/g, " ").trim() || "Recovered account";
+        extraCashAccounts.push({ id, name: fallbackName.replace(/\b\w/g, letter => letter.toUpperCase()), type, apy: 0 });
+      });
+      localStorage.setItem("flowly-extra-cash-accounts", JSON.stringify(extraCashAccounts));
       extraCashAccounts.forEach(account => {
         if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
       });
@@ -1481,7 +1511,9 @@
         }
       } catch (error) {
         console.error("Supabase sync failed:", error);
-        if (manual) showToast("Cloud sync needs the Supabase table setup");
+        showSyncError("Cloud sync unavailable: database setup required");
+        if (manual) showToast("Create the Supabase budget_data table first");
+        return;
       }
       const timestamp = new Date().toISOString();
       localStorage.setItem("flowly-last-sync", timestamp);
@@ -1503,6 +1535,11 @@
         .select("data, updated_at")
         .eq("user_id", supabaseUser.id)
         .maybeSingle();
+      if (error) {
+        console.error("Supabase initialization failed:", error);
+        showSyncError("Cloud sync unavailable: database setup required");
+        return;
+      }
       if (!error && data) {
         applyCloudData(data.data);
         lastCloudUpdatedAt = data.updated_at || "";
@@ -1542,9 +1579,7 @@
       selectedMethod = btn.dataset.method;
       document.querySelectorAll("[data-method]").forEach(b => b.classList.toggle("active", b === btn));
       const account = document.getElementById("paymentAccount");
-      account.innerHTML = selectedMethod === "Credit"
-        ? `<option>${bankNames.chase} credit ••1534</option>`
-        : `<option>${bankNames.chase} debit ••4821</option><option>${bankNames.sofi} debit ••1903</option><option>${bankNames.mission} debit ••7710</option>`;
+      account.innerHTML = selectedMethod === "Credit" ? creditPaymentOptions() : debitPaymentOptions();
     }));
 
     document.querySelectorAll("[data-method]").forEach(button => button.addEventListener("click", () => {
@@ -1581,6 +1616,18 @@
     document.getElementById("nextMonth").addEventListener("click", () => changeMonth(1));
     document.getElementById("expensePreviousMonth").addEventListener("click", () => changeMonth(-1));
     document.getElementById("expenseNextMonth").addEventListener("click", () => changeMonth(1));
+    document.getElementById("expenseSearch").addEventListener("input", event => {
+      expenseFilters.search = event.target.value.trim();
+      renderTransactions();
+    });
+    document.getElementById("expenseCategoryFilter").addEventListener("change", event => {
+      expenseFilters.category = event.target.value;
+      renderTransactions();
+    });
+    document.getElementById("expenseAccountFilter").addEventListener("change", event => {
+      expenseFilters.account = event.target.value;
+      renderTransactions();
+    });
 
     document.getElementById("isRecurring").addEventListener("change", event => {
       document.getElementById("recurringOptions").classList.toggle("show", event.target.checked);
@@ -1596,20 +1643,19 @@
         category: document.getElementById("category").value,
         method: document.getElementById("paymentAccount").value,
         paymentType: selectedMethod,
+        balanceApplied: true,
         date: document.getElementById("expenseDate").value
       };
-      transactions.unshift(tx);
       if (selectedMethod === "Credit") {
         tx.creditCardId = document.getElementById("paymentAccount").value;
-        const selectedCard = extraCreditCards.find(card => card.id === tx.creditCardId);
-        if (selectedCard) selectedCard.balance += tx.amount;
-        else creditCard.owed += tx.amount;
-        localStorage.setItem("flowly-credit-card", JSON.stringify(creditCard));
-        localStorage.setItem("flowly-extra-credit-cards", JSON.stringify(extraCreditCards));
-        renderCreditCard();
-        renderBalances();
-        renderHomePlanning();
       }
+      if (editingTransactionIndex === null) transactions.unshift(tx);
+      else {
+        reverseExpenseImpact(transactions[editingTransactionIndex]);
+        transactions[editingTransactionIndex] = tx;
+      }
+      applyExpenseImpact(tx);
+      persistAddedAccounts();
       if (recurringEnabled) {
         recurringPayments.unshift({
           merchant: tx.merchant,
@@ -1628,10 +1674,12 @@
       renderCalendar();
       renderSummary();
       event.target.reset();
+      editingTransactionIndex = null;
+      document.getElementById("expenseTitle").textContent = "Add an expense";
       document.getElementById("expenseDate").value = todayValue;
       document.getElementById("recurringOptions").classList.remove("show");
       document.getElementById("expenseModal").classList.remove("open");
-      showToast(`${money(tx.amount)} expense added`);
+      showToast(`${money(tx.amount)} expense saved`);
     });
 
     document.getElementById("transferForm").addEventListener("submit", event => {
