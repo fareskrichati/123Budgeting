@@ -254,6 +254,22 @@
       background: var(--green-dark); color: white; font-weight: 850; cursor: pointer;
     }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .amount-input-wrap { display: grid; grid-template-columns: 1fr auto; gap: 7px; align-items: end; }
+    .amount-input-wrap input { min-width: 0; }
+    .calculator-toggle {
+      height: 47px; width: 47px; border: 0; border-radius: 13px; cursor: pointer;
+      color: var(--green-dark); background: var(--lime); font-size: 19px; font-weight: 900;
+    }
+    .expense-calculator { display: none; padding: 12px; border-radius: 17px; background: #edf1ea; }
+    .expense-calculator.open { display: grid; gap: 9px; }
+    .calculator-display {
+      width: 100%; margin: 0; padding: 13px; border: 0; border-radius: 12px;
+      text-align: right; color: var(--ink); background: white; font-size: 19px; font-weight: 800;
+    }
+    .calculator-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .calculator-keys button { border: 0; border-radius: 11px; padding: 11px 5px; background: white; color: var(--ink); font-weight: 800; cursor: pointer; }
+    .calculator-keys button[data-calc-operator], .calculator-keys button[data-calc-equals] { color: var(--green-dark); background: var(--lime); }
+    .calculator-use { grid-column: span 2; color: white !important; background: var(--green-dark) !important; }
     .transfer-arrow { text-align: center; margin: -3px 0; color: var(--green); font-size: 21px; font-weight: 900; }
     .split-fields { display: none; gap: 10px; }
     .split-fields.show { display: grid; }
@@ -504,11 +520,38 @@
         </label>
         <div class="form-row">
           <label>Amount
-            <input id="amount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+            <span class="amount-input-wrap">
+              <input id="amount" type="number" min="0.01" step="0.01" placeholder="$0.00" required>
+              <button class="calculator-toggle" id="calculatorToggle" type="button" aria-label="Open calculator" aria-expanded="false">+</button>
+            </span>
           </label>
           <label>Date
             <input id="expenseDate" type="date" value="2026-06-08" required>
           </label>
+        </div>
+        <div class="expense-calculator" id="expenseCalculator">
+          <input class="calculator-display" id="calculatorDisplay" type="text" value="0" aria-label="Calculator expression" readonly>
+          <div class="calculator-keys">
+            <button type="button" data-calc-clear>C</button>
+            <button type="button" data-calc-delete>DEL</button>
+            <button type="button" data-calc-operator="/">/</button>
+            <button type="button" data-calc-operator="*">*</button>
+            <button type="button" data-calc-value="7">7</button>
+            <button type="button" data-calc-value="8">8</button>
+            <button type="button" data-calc-value="9">9</button>
+            <button type="button" data-calc-operator="-">-</button>
+            <button type="button" data-calc-value="4">4</button>
+            <button type="button" data-calc-value="5">5</button>
+            <button type="button" data-calc-value="6">6</button>
+            <button type="button" data-calc-operator="+">+</button>
+            <button type="button" data-calc-value="1">1</button>
+            <button type="button" data-calc-value="2">2</button>
+            <button type="button" data-calc-value="3">3</button>
+            <button type="button" data-calc-equals>=</button>
+            <button type="button" data-calc-value="0">0</button>
+            <button type="button" data-calc-value=".">.</button>
+            <button class="calculator-use" type="button" data-calc-use>Use total</button>
+          </div>
         </div>
         <label>Category
           <select id="category">
@@ -1514,6 +1557,79 @@
       if (event.target === modal) modal.classList.remove("open");
     }));
 
+    let calculatorExpression = "";
+    const calculatorPanel = document.getElementById("expenseCalculator");
+    const calculatorDisplay = document.getElementById("calculatorDisplay");
+    const calculatorToggle = document.getElementById("calculatorToggle");
+    function updateCalculatorDisplay() {
+      calculatorDisplay.value = calculatorExpression || "0";
+    }
+    function evaluateCalculatorExpression() {
+      const expression = calculatorExpression.replace(/\s/g, "");
+      if (!/^\d*\.?\d+(?:[+\-*/]\d*\.?\d+)*$/.test(expression)) return null;
+      const tokens = expression.match(/\d*\.?\d+|[+\-*/]/g);
+      const values = [Number(tokens[0])];
+      const operators = [];
+      for (let index = 1; index < tokens.length; index += 2) {
+        const operator = tokens[index];
+        const value = Number(tokens[index + 1]);
+        if (operator === "*" || operator === "/") {
+          const previous = values.pop();
+          if (operator === "/" && value === 0) return null;
+          values.push(operator === "*" ? previous * value : previous / value);
+        } else {
+          operators.push(operator);
+          values.push(value);
+        }
+      }
+      const total = operators.reduce((result, operator, index) => operator === "+" ? result + values[index + 1] : result - values[index + 1], values[0]);
+      return Number.isFinite(total) ? Math.round((total + Number.EPSILON) * 100) / 100 : null;
+    }
+    calculatorToggle.addEventListener("click", () => {
+      const opening = !calculatorPanel.classList.contains("open");
+      calculatorPanel.classList.toggle("open", opening);
+      calculatorToggle.setAttribute("aria-expanded", String(opening));
+      if (opening) {
+        calculatorExpression = document.getElementById("amount").value || "";
+        updateCalculatorDisplay();
+      }
+    });
+    document.querySelectorAll("[data-calc-value]").forEach(button => button.addEventListener("click", () => {
+      const value = button.dataset.calcValue;
+      const currentNumber = calculatorExpression.split(/[+\-*/]/).pop();
+      if (value === "." && currentNumber.includes(".")) return;
+      calculatorExpression += value;
+      updateCalculatorDisplay();
+    }));
+    document.querySelectorAll("[data-calc-operator]").forEach(button => button.addEventListener("click", () => {
+      if (!calculatorExpression) return;
+      calculatorExpression = calculatorExpression.replace(/[+\-*/]$/, "") + button.dataset.calcOperator;
+      updateCalculatorDisplay();
+    }));
+    document.querySelector("[data-calc-clear]").addEventListener("click", () => {
+      calculatorExpression = "";
+      updateCalculatorDisplay();
+    });
+    document.querySelector("[data-calc-delete]").addEventListener("click", () => {
+      calculatorExpression = calculatorExpression.slice(0, -1);
+      updateCalculatorDisplay();
+    });
+    document.querySelector("[data-calc-equals]").addEventListener("click", () => {
+      const result = evaluateCalculatorExpression();
+      if (result === null) return showToast("Finish the calculation first");
+      calculatorExpression = String(result);
+      updateCalculatorDisplay();
+    });
+    document.querySelector("[data-calc-use]").addEventListener("click", () => {
+      const result = evaluateCalculatorExpression();
+      if (result === null || result <= 0) return showToast("Enter a total above $0");
+      document.getElementById("amount").value = result.toFixed(2);
+      calculatorExpression = String(result);
+      updateCalculatorDisplay();
+      calculatorPanel.classList.remove("open");
+      calculatorToggle.setAttribute("aria-expanded", "false");
+    });
+
     document.querySelectorAll("[data-method]").forEach(btn => btn.addEventListener("click", () => {
       selectedMethod = btn.dataset.method;
       document.querySelectorAll("[data-method]").forEach(b => b.classList.toggle("active", b === btn));
@@ -1619,6 +1735,10 @@
       renderCalendar();
       renderSummary();
       event.target.reset();
+      calculatorExpression = "";
+      updateCalculatorDisplay();
+      calculatorPanel.classList.remove("open");
+      calculatorToggle.setAttribute("aria-expanded", "false");
       editingTransactionIndex = null;
       document.getElementById("expenseTitle").textContent = "Add an expense";
       document.getElementById("expenseDate").value = todayValue;
