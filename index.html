@@ -393,6 +393,7 @@
         <div class="weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
         <div class="calendar-grid" id="calendarGrid"></div>
         <div class="spend-summary"><span id="selectedDate">June 8 spending</span><strong id="selectedSpend">$0.00</strong></div>
+        <div class="spend-summary"><span>Average weekly spending</span><strong id="averageWeeklySpend">$0.00</strong></div>
         <div class="calendar-recurring" id="calendarRecurring"></div>
       </div>
       <div class="section-head"><h2>Monthly pace</h2></div>
@@ -728,7 +729,7 @@
     transactions = transactions.filter(tx => !(demoMerchants.has(tx.merchant) && tx.date.startsWith("2026-06")));
     localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
     let balances = JSON.parse(localStorage.getItem("flowly-balances")) || {};
-    if (!("chaseChecking" in balances)) {
+    if (!localStorage.getItem("flowly-dynamic-accounts") && !("chaseChecking" in balances)) {
       balances = {
         chaseChecking: Number(balances.chase || 0), chaseSavings: 0,
         sofiChecking: Number(balances.sofi || 0), sofiSavings: 0,
@@ -782,21 +783,6 @@
     extraCashAccounts.forEach(account => {
       if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
     });
-    function repairDebitExpenseBalances() {
-      let repaired = false;
-      transactions.forEach(tx => {
-        if (tx.paymentType !== "Credit" && tx.balanceApplied && tx.type !== "cardPayment" && tx.method in balances) {
-          balances[tx.method] = Number(balances[tx.method] || 0) + Number(tx.amount || 0);
-          tx.balanceApplied = false;
-          repaired = true;
-        }
-      });
-      if (repaired) {
-        localStorage.setItem("flowly-balances", JSON.stringify(balances));
-        localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
-      }
-    }
-    repairDebitExpenseBalances();
     let selectedMethod = "Debit";
     let depositMode = "single";
     let editingPaycheckIndex = null;
@@ -808,7 +794,7 @@
       "flowly-transactions", "flowly-balances", "flowly-paychecks", "flowly-profile",
       "flowly-bank-names", "flowly-bank-apys", "flowly-credit-card", "flowly-recurring",
       "flowly-extra-cash-accounts", "flowly-investment-accounts", "flowly-extra-credit-cards",
-      "flowly-payday-settings"
+      "flowly-payday-settings", "flowly-dynamic-accounts"
     ];
     let lastSyncSignature = "";
 
@@ -857,12 +843,18 @@
       if (tx.paymentType === "Credit") {
         const card = extraCreditCards.find(item => item.id === tx.creditCardId);
         if (card) card.balance = Math.max(0, Number(card.balance) - Number(tx.amount));
+      } else if (tx.type !== "cardPayment" && tx.balanceApplied && tx.method in balances) {
+        balances[tx.method] = Number(balances[tx.method] || 0) + Number(tx.amount);
+        tx.balanceApplied = false;
       }
     }
     function applyExpenseImpact(tx) {
       if (tx.paymentType === "Credit") {
         const card = extraCreditCards.find(item => item.id === tx.creditCardId);
         if (card) card.balance = Number(card.balance || 0) + Number(tx.amount);
+      } else if (tx.type !== "cardPayment" && tx.method in balances) {
+        balances[tx.method] = Number(balances[tx.method] || 0) - Number(tx.amount);
+        tx.balanceApplied = true;
       }
     }
 
@@ -907,6 +899,9 @@
         transactions.splice(index, 1);
         persistAddedAccounts();
         localStorage.setItem("flowly-transactions", JSON.stringify(transactions));
+        renderBalances();
+        renderCreditCard();
+        renderHomePlanning();
         renderTransactions();
         renderCalendar();
         renderSummary();
@@ -947,6 +942,8 @@
       transactions.forEach(tx => {
         if (tx.date.startsWith(key)) daily[Number(tx.date.slice(-2))] = (daily[Number(tx.date.slice(-2))] || 0) + tx.amount;
       });
+      const monthlyTotal = Object.values(daily).reduce((sum, amount) => sum + Number(amount), 0);
+      document.getElementById("averageWeeklySpend").textContent = money(monthlyTotal * 7 / daysInMonth);
       recurringPayments.forEach(item => {
         if (!item.nextDate) return;
         let occurrence = new Date(item.nextDate + "T12:00:00");
@@ -1394,7 +1391,6 @@
       extraCashAccounts.forEach(account => {
         if (!(account.id in balances)) balances[account.id] = Number(account.balance || 0);
       });
-      repairDebitExpenseBalances();
       renderTransactions();
       renderCalendar();
       renderBalances();
@@ -1602,6 +1598,9 @@
       }
       applyExpenseImpact(tx);
       persistAddedAccounts();
+      renderBalances();
+      renderCreditCard();
+      renderHomePlanning();
       if (recurringEnabled) {
         recurringPayments.unshift({
           merchant: tx.merchant,
